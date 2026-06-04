@@ -32,7 +32,7 @@ namespace GerberCombinerBuilder
             toolTip.SetToolTip(ZoomOutButton, "Zoom out");
         }
         private bool Initializing = true;
-        private float LastAngle;
+        private double LastAngle;
 
         public void UpdateBoxes(GerberPanelize newTarget)
         {
@@ -90,7 +90,7 @@ namespace GerberCombinerBuilder
             ybox.Value = (decimal)y;
             rbox.Value = (decimal)r;
             radiusbox.Value = (decimal)rad;
-            LastAngle = (float)r;
+            LastAngle = r;
             Initializing = false;
             }
             finally
@@ -108,21 +108,21 @@ namespace GerberCombinerBuilder
             
             if (TargetInstance.SelectedInstance == null) return;
 
-            float newAngle = (float)rbox.Value;
+            double newAngle = (double)rbox.Value;
 
             if (TargetInstance.SelectedInstance.GetType() == typeof(BreakTab))
             {
-                TargetInstance.SelectedInstance.Center.X = (float)xbox.Value;
-                TargetInstance.SelectedInstance.Center.Y = (float)ybox.Value;
+                TargetInstance.SelectedInstance.Center.X = (double)xbox.Value;
+                TargetInstance.SelectedInstance.Center.Y = (double)ybox.Value;
                 TargetInstance.SelectedInstance.Angle = newAngle;
                 BreakTab BT = TargetInstance.SelectedInstance as BreakTab;
-                BT.Radius = (float)radiusbox.Value;
+                BT.Radius = (double)radiusbox.Value;
             }
             else if (TargetInstance.SelectedInstance.GetType() == typeof(GerberInstance))
             {
-                bool angleChanged = (Math.Abs(newAngle - LastAngle) > 0.001f);
-                bool posChanged = (Math.Abs((float)xbox.Value - TargetInstance.SelectedInstance.Center.X) > 0.001)
-                               || (Math.Abs((float)ybox.Value - TargetInstance.SelectedInstance.Center.Y) > 0.001);
+                bool angleChanged = (Math.Abs(newAngle - LastAngle) > 0.001);
+                bool posChanged = (Math.Abs((double)xbox.Value - TargetInstance.SelectedInstance.Center.X) > 0.001)
+                               || (Math.Abs((double)ybox.Value - TargetInstance.SelectedInstance.Center.Y) > 0.001);
 
                 if (angleChanged && !posChanged)
                 {
@@ -130,18 +130,18 @@ namespace GerberCombinerBuilder
                 }
                 else if (angleChanged && posChanged)
                 {
-                    TargetInstance.SelectedInstance.Center.X = (float)xbox.Value;
-                    TargetInstance.SelectedInstance.Center.Y = (float)ybox.Value;
+                    TargetInstance.SelectedInstance.Center.X = (double)xbox.Value;
+                    TargetInstance.SelectedInstance.Center.Y = (double)ybox.Value;
                     TargetInstance.RotateInstanceTo(TargetInstance.SelectedInstance, newAngle);
-                    TargetInstance.SelectedInstance.Center.X = (float)xbox.Value;
-                    TargetInstance.SelectedInstance.Center.Y = (float)ybox.Value;
+                    TargetInstance.SelectedInstance.Center.X = (double)xbox.Value;
+                    TargetInstance.SelectedInstance.Center.Y = (double)ybox.Value;
                     GerberInstance GI = TargetInstance.SelectedInstance as GerberInstance;
                     GI.RebuildTransformed(TargetInstance.ThePanel.GerberOutlines[GI.GerberPath], TargetInstance.ThePanel.TheSet.ExtraTabDrillDistance);
                 }
                 else
                 {
-                    TargetInstance.SelectedInstance.Center.X = (float)xbox.Value;
-                    TargetInstance.SelectedInstance.Center.Y = (float)ybox.Value;
+                    TargetInstance.SelectedInstance.Center.X = (double)xbox.Value;
+                    TargetInstance.SelectedInstance.Center.Y = (double)ybox.Value;
                     GerberInstance GI = TargetInstance.SelectedInstance as GerberInstance;
                     GI.RebuildTransformed(TargetInstance.ThePanel.GerberOutlines[GI.GerberPath], TargetInstance.ThePanel.TheSet.ExtraTabDrillDistance);
                 }

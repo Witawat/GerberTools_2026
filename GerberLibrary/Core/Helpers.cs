@@ -13,26 +13,26 @@ namespace GerberLibrary.Core
 {
     public class Line
     {
-        public float x1;
-        public float y1;
-        public float x2;
-        public float y2;
+        public double x1;
+        public double y1;
+        public double x2;
+        public double y2;
 
         public void Draw(Graphics g, Color C, float W = 1.0f)
         {
-            g.DrawLine(new Pen(C, W), x1, y1, x2, y2);
+            g.DrawLine(new Pen(C, W), (float)x1, (float)y1, (float)x2, (float)y2);
         }
 
-        public static float SumLengths(List<Line> outline)
+        public static double SumLengths(List<Line> outline)
         {
             return outline.Sum(x => x.Length());
         }
 
-        private float Length()
+        private double Length()
         {
-            float dx = x2 - x1;
-            float dy = y2 - y1;
-            return (float)Math.Sqrt(dx * dx + dy * dy);
+            double dx = x2 - x1;
+            double dy = y2 - y1;
+            return Math.Sqrt(dx * dx + dy * dy);
         }
     }
 
@@ -249,7 +249,7 @@ namespace GerberLibrary.Core
 
             GerberNumberFormat GNF = new GerberNumberFormat();
 
-            double na = angle * (Math.PI * 2.0) / 360.0; ;
+            double na = angle * (Math.PI * 2.0) / 360.0;
             double SA = Math.Sin(na);
             double CA = Math.Cos(na);
             GNF.Multiplier = 1;
@@ -259,7 +259,7 @@ namespace GerberLibrary.Core
         }
 
 
-        public static Line TransFormLine(Line v, double dx, double dy, float cx, float cy, double angle)
+        public static Line TransFormLine(Line v, double dx, double dy, double cx, double cy, double angle)
         {
             double x1 = v.x1;
             double x2 = v.x2;
@@ -1148,9 +1148,9 @@ namespace GerberLibrary.Core
         {
             var mu2 = mu * mu;
 
-            var a0 = -0.5f * y0 + 1.5f * y1 - 1.5f * y2 + 0.5f * y3;
-            var a1 = y0 - 2.5f * y1 + 2f * y2 - 0.5f * y3;
-            var a2 = -0.5f * y0 + 0.5f * y2;
+            var a0 = -0.5 * y0 + 1.5 * y1 - 1.5 * y2 + 0.5 * y3;
+            var a1 = y0 - 2.5 * y1 + 2.0 * y2 - 0.5 * y3;
+            var a2 = -0.5 * y0 + 0.5 * y2;
             var a3 = y1;
 
             return (a0 * mu * mu2) + (a1 * mu2) + (a2 * mu) + a3;
@@ -1328,7 +1328,7 @@ namespace GerberLibrary.Core
                 intersection2 = new PointD(double.NaN, double.NaN);
                 return 0;
             }
-            else if (det == 0)
+            else if (Math.Abs(det) < 1e-10)
             {
                 // One solution.
                 t = -B / (2 * A);
@@ -1389,23 +1389,28 @@ namespace GerberLibrary.Core
         {
             if (minorGrid < 0) return;
 
+            double dMinor = minorGrid;
+            double dMajor = majorGrid;
+            double dWidth = width;
+            double dHeight = height;
+
             Pen P = new Pen(System.Drawing.ColorTranslator.FromHtml("#c4e5ff"), PW * 0.5f);
-            for (float X = 0; X <= width; X += minorGrid)
+            for (double X = 0; X <= dWidth; X += dMinor)
             {
-                G.DrawLine(P, X, 0, X, height);
+                G.DrawLine(P, (float)X, 0, (float)X, height);
             }
-            for (float X = 0; X <= height; X += minorGrid)
+            for (double Y = 0; Y <= dHeight; Y += dMinor)
             {
-                G.DrawLine(P, 0.0f, X, width, X);
+                G.DrawLine(P, 0.0f, (float)Y, width, (float)Y);
             }
             P = new Pen(System.Drawing.ColorTranslator.FromHtml("#bad7ed"), PW);
-            for (float X = 0; X <= width; X += majorGrid)
+            for (double X = 0; X <= dWidth; X += dMajor)
             {
-                G.DrawLine(P, X, 0, X, height);
+                G.DrawLine(P, (float)X, 0, (float)X, height);
             }
-            for (float X = 0; X <= height; X += majorGrid)
+            for (double Y = 0; Y <= dHeight; Y += dMajor)
             {
-                G.DrawLine(P, 0.0f, X, width, X);
+                G.DrawLine(P, 0.0f, (float)Y, width, (float)Y);
             }
         }
 

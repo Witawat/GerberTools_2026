@@ -257,8 +257,8 @@ namespace GerberLibrary
 
                     for (int i = 0; i < sides; i++)
                     {
-                        double PP = i * 6.283f / (double)sides;
-                        DispPL.Add(Hole.X + (double)Math.Sin(PP) * (double)Tool.Radius, Hole.Y + (double)Math.Cos(PP) * (double)Tool.Radius);
+                        double PP = i * Math.PI * 2 / (double)sides;
+                        DispPL.Add(Hole.X + Math.Sin(PP) * Tool.Radius, Hole.Y + Math.Cos(PP) * Tool.Radius);
                     }
                     DispPL.Close();
                     DispPL.MyColor = Color.DarkGreen;
@@ -272,20 +272,20 @@ namespace GerberLibrary
                     double dy = Slot.End.Y - Slot.Start.Y;
                     double dx = Slot.End.X - Slot.Start.X;
 
-                    double offangl = -Math.Atan2(dy, dx) + 3.1415;
+                    double offangl = -Math.Atan2(dy, dx) + Math.PI;
 
                     for (int i = 0; i < sides / 2; i++)
                     {
-                        double PP = i * 6.283f / (double)sides;
+                        double PP = i * Math.PI * 2 / (double)sides;
                         PP += offangl;
-                        DispPL.Add(Slot.Start.X + (double)Math.Sin(PP) * (double)Tool.Radius, Slot.Start.Y + (double)Math.Cos(PP) * (double)Tool.Radius);
+                        DispPL.Add(Slot.Start.X + Math.Sin(PP) * Tool.Radius, Slot.Start.Y + Math.Cos(PP) * Tool.Radius);
                     }
 
                     for (int i = sides / 2; i < sides; i++)
                     {
-                        double PP = i * 6.283f / (double)sides;
+                        double PP = i * Math.PI * 2 / (double)sides;
                         PP += offangl;
-                        DispPL.Add(Slot.End.X + (double)Math.Sin(PP) * (double)Tool.Radius, Slot.End.Y + (double)Math.Cos(PP) * (double)Tool.Radius);
+                        DispPL.Add(Slot.End.X + Math.Sin(PP) * Tool.Radius, Slot.End.Y + Math.Cos(PP) * Tool.Radius);
                     }
 
                     DispPL.Close();
@@ -329,8 +329,8 @@ namespace GerberLibrary
 
                     for (int i = 0; i < sides; i++)
                     {
-                        double PP = i * 6.283f / (double)sides;
-                        DispPL.Add(Hole.X + (double)Math.Sin(PP) * (double)Tool.Radius, Hole.Y + (double)Math.Cos(PP) * (double)Tool.Radius);
+                        double PP = i * Math.PI * 2 / (double)sides;
+                        DispPL.Add(Hole.X + Math.Sin(PP) * Tool.Radius, Hole.Y + Math.Cos(PP) * Tool.Radius);
                     }
                     DispPL.Close();
                     DispPL.MyColor = Color.DarkGreen;
@@ -344,20 +344,20 @@ namespace GerberLibrary
                     double dy = Slot.End.Y - Slot.Start.Y;
                     double dx = Slot.End.X - Slot.Start.X;
 
-                    double offangl = -Math.Atan2(dy, dx) + 3.1415;
+                    double offangl = -Math.Atan2(dy, dx) + Math.PI;
 
                     for (int i = 0; i < sides / 2; i++)
                     {
-                        double PP = i * 6.283f / (double)sides;
+                        double PP = i * Math.PI * 2 / (double)sides;
                         PP += offangl;
-                        DispPL.Add(Slot.Start.X + (double)Math.Sin(PP) * (double)Tool.Radius, Slot.Start.Y + (double)Math.Cos(PP) * (double)Tool.Radius);
+                        DispPL.Add(Slot.Start.X + Math.Sin(PP) * Tool.Radius, Slot.Start.Y + Math.Cos(PP) * Tool.Radius);
                     }
 
                     for (int i = sides / 2; i < sides; i++)
                     {
-                        double PP = i * 6.283f / (double)sides;
+                        double PP = i * Math.PI * 2 / (double)sides;
                         PP += offangl;
-                        DispPL.Add(Slot.End.X + (double)Math.Sin(PP) * (double)Tool.Radius, Slot.End.Y + (double)Math.Cos(PP) * (double)Tool.Radius);
+                        DispPL.Add(Slot.End.X + Math.Sin(PP) * Tool.Radius, Slot.End.Y + Math.Cos(PP) * Tool.Radius);
                     }
 
                     DispPL.Close();

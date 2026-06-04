@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -46,7 +47,7 @@ namespace GerberCombinerBuilder
             {
                 if (TargetInstance.GetType() == typeof(GerberInstance))
                 {
-                    return String.Format("Instance: {0} {1},{2} {3}", Path.GetFileNameWithoutExtension((TargetInstance as GerberInstance).GerberPath), TargetInstance.Center.X, TargetInstance.Center.Y, TargetInstance.Angle);
+                    return String.Format(CultureInfo.InvariantCulture, "Instance: {0} {1:F3},{2:F3} {3:F1}", Path.GetFileNameWithoutExtension((TargetInstance as GerberInstance).GerberPath), TargetInstance.Center.X, TargetInstance.Center.Y, TargetInstance.Angle);
                 }
                 else
                 {

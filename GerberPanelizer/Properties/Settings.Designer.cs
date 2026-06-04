@@ -60,5 +60,13 @@ namespace GerberCombinerBuilder.Properties {
             get { return ((global::System.Collections.Specialized.StringCollection)(this["RecentFiles"])); }
             set { this["RecentFiles"] = value; }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool DebugBreakTabLog {
+            get { return ((bool)(this["DebugBreakTabLog"])); }
+            set { this["DebugBreakTabLog"] = value; }
+        }
     }
 }

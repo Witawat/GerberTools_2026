@@ -168,8 +168,8 @@ namespace GerberLibrary.Core
 
             for (int i = 0; i < 101; i++)
             {
-                double p = (double)i * 0.06283f;
-                S2.Add(10.0f + (double)Math.Sin(p) * 5.0f, 15.0f - (double)Math.Cos(p) * 5.0f);
+                double p = i * Math.PI * 2 / 100.0;
+                S2.Add(10.0 + Math.Sin(p) * 5.0, 15.0 - Math.Cos(p) * 5.0);
             }
             Shapes.Add(S2);
 
@@ -316,24 +316,13 @@ namespace GerberLibrary.Core
             }
 
         }
+
         public PointD Normalize()
         {
-
-            PointD t = new PointD(-BoundingBox.TopLeft.X, -BoundingBox.TopLeft.Y);
-            // return;
-            TranslationSinceLoad.X -= BoundingBox.TopLeft.X;
-            TranslationSinceLoad.Y -= BoundingBox.TopLeft.Y;
-
-            foreach (var a in DisplayShapes)
-            {
-                a.MoveBack(BoundingBox.TopLeft);
-            }
-
-            foreach (var a in OutlineShapes)
-            {
-                a.MoveBack(BoundingBox.TopLeft);
-            }
-            return t;
+            PointD shift = new PointD(-BoundingBox.TopLeft.X, -BoundingBox.TopLeft.Y);
+            Translate(shift);
+            CalcPathBounds();
+            return shift;
         }
 
         public void BuildBoundary()

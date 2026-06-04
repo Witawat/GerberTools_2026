@@ -10,6 +10,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -43,9 +44,11 @@ namespace GerberCombinerBuilder
         private PointD BoxSelectStart = new PointD();
         private PointD BoxSelectCurrent = new PointD();
 
-        private float DrawingScale;
+        private double DrawingScale;
         public double Zoom = 1;
         public double TargetZoom = 1;
+        public const double MinZoom = 0.01;
+        public const double MaxZoom = 500.0;
         public PointD CenterPoint = new PointD(0, 0);
 
         // Undo/Redo
@@ -107,7 +110,7 @@ namespace GerberCombinerBuilder
             TV = tv;
             ID = id;
             TV.BuildTree(this, ThePanel.TheSet);
-            DrawingScale = Math.Min(glControl1.Width, glControl1.Height) / 110.0f;
+            DrawingScale = Math.Min(glControl1.Width, glControl1.Height) / 110.0;
 
             MouseCoordLabel = new ToolStripStatusLabel("0, 0") { BorderSides = ToolStripStatusLabelBorderSides.Right };
             ZoomLabel = new ToolStripStatusLabel("Zoom: 1.0x") { BorderSides = ToolStripStatusLabelBorderSides.Right };
@@ -115,6 +118,23 @@ namespace GerberCombinerBuilder
             statusStrip1.Items.Insert(0, InstanceCountLabel);
             statusStrip1.Items.Insert(0, ZoomLabel);
             statusStrip1.Items.Insert(0, MouseCoordLabel);
+
+            var debugLogToggle = new ToolStripMenuItem("Debug BreakTab Log")
+            {
+                CheckOnClick = true,
+                Checked = Properties.Settings.Default.DebugBreakTabLog
+            };
+            debugLogToggle.CheckedChanged += (s, e) =>
+            {
+                Properties.Settings.Default.DebugBreakTabLog = debugLogToggle.Checked;
+                GerberPanel.DebugBreakTabLog = debugLogToggle.Checked;
+                try { Properties.Settings.Default.Save(); } catch { }
+            };
+            statusStrip1.Items.Add(new ToolStripSeparator());
+            statusStrip1.Items.Add(debugLogToggle);
+
+            try { GerberPanel.DebugBreakTabLog = Properties.Settings.Default.DebugBreakTabLog; }
+            catch { }
 
             ZoomToFit();
             BuildTitle();
@@ -149,11 +169,11 @@ namespace GerberCombinerBuilder
             PointD MMToMouse(PointD MM)
         {
             PointD P = new PointD(MM.X, MM.Y);
-            P.X -= (float)CenterPoint.X;
-            P.Y -= (float)CenterPoint.Y;
+            P.X -= CenterPoint.X;
+            P.Y -= CenterPoint.Y;
 
-            P.X *= (float)Zoom;
-            P.Y *= (float)Zoom;
+            P.X *= Zoom;
+            P.Y *= Zoom;
 
             P.Y *= -1;
 
@@ -173,10 +193,10 @@ namespace GerberCombinerBuilder
             P.X -= glControl1.Width / 2;
             P.Y -= glControl1.Height / 2;
             P.Y *= -1;
-            P.X /= (float)Zoom;
-            P.Y /= (float)Zoom;
-            P.X += (float)CenterPoint.X;
-            P.Y += (float)CenterPoint.Y;
+            P.X /= Zoom;
+            P.Y /= Zoom;
+            P.X += CenterPoint.X;
+            P.Y += CenterPoint.Y;
 
             return P;
 
@@ -611,7 +631,7 @@ namespace GerberCombinerBuilder
             {
                 MouseCapture = false;
                 PointD Delta = new PointD(e.X, e.Y) - DragStartCoord;
-                if (Delta.Length() == 0)
+                if (Delta.Length() < 0.5)
                 {
                      // Clicked, not dragged. 
                      PendingUndoState = null; // discard
@@ -722,7 +742,7 @@ namespace GerberCombinerBuilder
             }
             var world = MouseToMM(new PointD(e.X, e.Y));
             if (MouseCoordLabel != null)
-                MouseCoordLabel.Text = string.Format("{0:F1}, {1:F1}", world.X, world.Y);
+            MouseCoordLabel.Text = string.Format(CultureInfo.InvariantCulture, "{0:F1}, {1:F1}", world.X, world.Y);
         }
 
         public double SnapDistance()
@@ -732,8 +752,8 @@ namespace GerberCombinerBuilder
             {
                 case SnapMode.MM1: return 1;
                 case SnapMode.MM05: return 0.5;
-                case SnapMode.Mil50: return 50 * (25.4 / 1000.0);
-                case SnapMode.Mil100: return 100 * (25.4 / 1000.0);
+                case SnapMode.Mil50: return 50.0 * 25.4 / 1000.0;
+                case SnapMode.Mil100: return 100.0 * 25.4 / 1000.0;
             };
             return -1;
 
@@ -753,8 +773,8 @@ namespace GerberCombinerBuilder
             };
 
             PointD Res = new PointD();
-            Res.X = Math.Round(inp.X * multdiv) / multdiv;
-            Res.Y = Math.Round(inp.Y * multdiv) / multdiv;
+            Res.X = Math.Round(inp.X * multdiv, MidpointRounding.AwayFromZero) / multdiv;
+            Res.Y = Math.Round(inp.Y * multdiv, MidpointRounding.AwayFromZero) / multdiv;
             return Res;
 
         }
@@ -897,7 +917,7 @@ namespace GerberCombinerBuilder
             }
 
             glControl1.MakeCurrent();
-            DrawingScale = Math.Min(glControl1.Width, glControl1.Height) / (float)(Math.Max(ThePanel.TheSet.Height, ThePanel.TheSet.Width) + 10);
+            DrawingScale = Math.Min(glControl1.Width, glControl1.Height) / (Math.Max(ThePanel.TheSet.Height, ThePanel.TheSet.Width) + 10);
             GraphicsInterface GI = (GraphicsInterface)new GLGraphicsInterface(0, 0, glControl1.Width, glControl1.Height);
 
             GL.MatrixMode(MatrixMode.Projection);
@@ -923,7 +943,7 @@ namespace GerberCombinerBuilder
                 GL.Color4(0.15f, 0.15f, 0.15f, 0.3f);
                 GL.LineWidth(0.5f);
                 GL.Begin(PrimitiveType.Lines);
-                double gridStep = 10;
+                double gridStep = Math.Max(SnapDistance(), 1);
                 double viewLeft = CenterPoint.X - glControl1.Width / (2 * Zoom);
                 double viewRight = CenterPoint.X + glControl1.Width / (2 * Zoom);
                 double viewBottom = CenterPoint.Y - glControl1.Height / (2 * Zoom);
@@ -946,7 +966,7 @@ namespace GerberCombinerBuilder
     {
         if (inst != SelectedInstance)
         {
-             ThePanel.RenderInstance(GI, DrawingScale, Color.Black, inst, false, true, false, Zoom);
+             ThePanel.RenderInstance(GI, (float)DrawingScale, Color.Black, inst, false, true, false, Zoom);
         }
     }
 
@@ -1302,7 +1322,7 @@ namespace GerberCombinerBuilder
 
         public void ZoomIn()
         {
-            TargetZoom *= 1.5;
+            TargetZoom = Math.Min(TargetZoom * 1.5, MaxZoom);
             StartZoomAnimation(glControl1.Width / 2, glControl1.Height / 2);
         }
 
@@ -1313,7 +1333,7 @@ namespace GerberCombinerBuilder
 
         public void ZoomOut()
         {
-            TargetZoom *= 0.6;
+            TargetZoom = Math.Max(TargetZoom * 0.6, MinZoom);
             StartZoomAnimation(glControl1.Width / 2, glControl1.Height / 2);
         }
 
@@ -1411,14 +1431,14 @@ namespace GerberCombinerBuilder
 
                 case Keys.Add:
                 case Keys.Oemplus:
-                    Zoom *= 1.05;
+                    Zoom = Math.Min(Zoom * 1.05, MaxZoom);
                     UpdateScrollers();
                     Redraw(false);
                     break;
 
                 case Keys.OemMinus:
                 case Keys.Subtract:
-                    Zoom *= 0.95;
+                    Zoom = Math.Max(Zoom * 0.95, MinZoom);
                     UpdateScrollers();
                     Redraw(false);
                     break;
@@ -1427,15 +1447,15 @@ namespace GerberCombinerBuilder
                     if (HoverShape != null && HoverShape is BreakTab)
                     {
                         var BT = HoverShape as BreakTab;
-                        BT.Radius -= 0.25f;
-                        if (BT.Radius < 0.5f) BT.Radius = 0.5f;
+                        BT.Radius -= 0.25;
+                        if (BT.Radius < 0.5) BT.Radius = 0.5;
                         Redraw(true);
                     }
                     else if (SelectedInstance != null && SelectedInstance is BreakTab)
                     {
                          var BT = SelectedInstance as BreakTab;
-                        BT.Radius -= 0.25f;
-                        if (BT.Radius < 0.5f) BT.Radius = 0.5f;
+                        BT.Radius -= 0.25;
+                        if (BT.Radius < 0.5) BT.Radius = 0.5;
                         Redraw(true);
                     }
                     break;
@@ -1444,13 +1464,13 @@ namespace GerberCombinerBuilder
                     if (HoverShape != null && HoverShape is BreakTab)
                     {
                          var BT = HoverShape as BreakTab;
-                         BT.Radius += 0.25f;
+                         BT.Radius += 0.25;
                          Redraw(true);
                     }
                     else if (SelectedInstance != null && SelectedInstance is BreakTab)
                     {
                          var BT = SelectedInstance as BreakTab;
-                         BT.Radius += 0.25f;
+                         BT.Radius += 0.25;
                          Redraw(true);
                     }
                     break;
@@ -1461,19 +1481,23 @@ namespace GerberCombinerBuilder
                         switch (e.KeyCode)
                         {
                             case Keys.Up:
-                                SelectedInstance.Center.Y -= (float)SnapDistance();
+                                SelectedInstance.Center.Y -= SnapDistance();
+                                SelectedInstance.Center = Snap(SelectedInstance.Center);
                                 Redraw(true);
                                 break;
                             case Keys.Down:
-                                SelectedInstance.Center.Y += (float)SnapDistance();
+                                SelectedInstance.Center.Y += SnapDistance();
+                                SelectedInstance.Center = Snap(SelectedInstance.Center);
                                 Redraw(true);
                                 break;
                             case Keys.Left:
-                                SelectedInstance.Center.X -= (float)SnapDistance();
+                                SelectedInstance.Center.X -= SnapDistance();
+                                SelectedInstance.Center = Snap(SelectedInstance.Center);
                                 Redraw(true);
                                 break;
                             case Keys.Right:
-                                SelectedInstance.Center.X += (float)SnapDistance();
+                                SelectedInstance.Center.X += SnapDistance();
+                                SelectedInstance.Center = Snap(SelectedInstance.Center);
                                 Redraw(true);
                                 break;
                         }
@@ -1625,12 +1649,12 @@ namespace GerberCombinerBuilder
             }
         }
 
-        internal void RotateInstanceBy(AngledThing instance, float deltaAngle)
+        internal void RotateInstanceBy(AngledThing instance, double deltaAngle)
         {
             RotateInstanceTo(instance, instance.Angle + deltaAngle);
         }
 
-        internal void RotateInstanceTo(AngledThing instance, float newAngle)
+        internal void RotateInstanceTo(AngledThing instance, double newAngle)
         {
             var gi = instance as GerberInstance;
             if (gi == null)
@@ -1649,19 +1673,23 @@ namespace GerberCombinerBuilder
                 (gi.BoundingBox.TopLeft.Y + gi.BoundingBox.BottomRight.Y) / 2
             );
 
+            double angleDelta = newAngle - gi.Angle;
             gi.Angle = newAngle;
             while (gi.Angle > 180) gi.Angle -= 360;
             while (gi.Angle < -180) gi.Angle += 360;
             gi.RebuildTransformed(outline, extra);
 
-            var newCenter = new PointD(
-                (gi.BoundingBox.TopLeft.X + gi.BoundingBox.BottomRight.X) / 2,
-                (gi.BoundingBox.TopLeft.Y + gi.BoundingBox.BottomRight.Y) / 2
-            );
+            if (Math.Abs(angleDelta) > 0.001 || Math.Abs(oldCenter.X - (gi.BoundingBox.TopLeft.X + gi.BoundingBox.BottomRight.X) / 2) > 0.01)
+            {
+                var newCenter = new PointD(
+                    (gi.BoundingBox.TopLeft.X + gi.BoundingBox.BottomRight.X) / 2,
+                    (gi.BoundingBox.TopLeft.Y + gi.BoundingBox.BottomRight.Y) / 2
+                );
 
-            gi.Center.X += (float)(oldCenter.X - newCenter.X);
-            gi.Center.Y += (float)(oldCenter.Y - newCenter.Y);
-            gi.RebuildTransformed(outline, extra);
+                gi.Center.X += oldCenter.X - newCenter.X;
+                gi.Center.Y += oldCenter.Y - newCenter.Y;
+                gi.RebuildTransformed(outline, extra);
+            }
         }
 
         private void RotateRightHover_Click(object sender, EventArgs e)
@@ -1689,7 +1717,7 @@ namespace GerberCombinerBuilder
             if (e.Delta != 0)
             {
                 double det = e.Delta > 0 ? 1.5 : 0.6;
-                TargetZoom *= det;
+                TargetZoom = Math.Max(MinZoom, Math.Min(TargetZoom * det, MaxZoom));
                 StartZoomAnimation(e.X, e.Y);
             }
         }
@@ -1713,7 +1741,7 @@ namespace GerberCombinerBuilder
             try
             {
                 XmlSerializer serializer = new XmlSerializer(typeof(ClipboardData));
-                using (StringWriter writer = new StringWriter())
+                using (StringWriter writer = new StringWriter(CultureInfo.InvariantCulture))
                 {
                     serializer.Serialize(writer, data);
                     Clipboard.SetText(writer.ToString());
@@ -1836,7 +1864,7 @@ namespace GerberCombinerBuilder
             PushUndo();
             double minX = double.MaxValue;
             foreach (var inst in SelectedInstances) { var gi = inst as GerberInstance; if (gi != null && gi.BoundingBox.TopLeft.X < minX) minX = gi.BoundingBox.TopLeft.X; }
-            foreach (var inst in SelectedInstances) { var gi = inst as GerberInstance; if (gi != null) gi.Center.X += (float)(minX - gi.BoundingBox.TopLeft.X); }
+            foreach (var inst in SelectedInstances) { var gi = inst as GerberInstance; if (gi != null) gi.Center.X += minX - gi.BoundingBox.TopLeft.X; }
             Redraw(true);
         }
 
@@ -1846,7 +1874,7 @@ namespace GerberCombinerBuilder
             PushUndo();
             double maxX = double.MinValue;
             foreach (var inst in SelectedInstances) { var gi = inst as GerberInstance; if (gi != null && gi.BoundingBox.BottomRight.X > maxX) maxX = gi.BoundingBox.BottomRight.X; }
-            foreach (var inst in SelectedInstances) { var gi = inst as GerberInstance; if (gi != null) gi.Center.X += (float)(maxX - gi.BoundingBox.BottomRight.X); }
+            foreach (var inst in SelectedInstances) { var gi = inst as GerberInstance; if (gi != null) gi.Center.X += maxX - gi.BoundingBox.BottomRight.X; }
             Redraw(true);
         }
 
@@ -1856,7 +1884,7 @@ namespace GerberCombinerBuilder
             PushUndo();
             double maxY = double.MinValue;
             foreach (var inst in SelectedInstances) { var gi = inst as GerberInstance; if (gi != null && gi.BoundingBox.BottomRight.Y > maxY) maxY = gi.BoundingBox.BottomRight.Y; }
-            foreach (var inst in SelectedInstances) { var gi = inst as GerberInstance; if (gi != null) gi.Center.Y += (float)(maxY - gi.BoundingBox.BottomRight.Y); }
+            foreach (var inst in SelectedInstances) { var gi = inst as GerberInstance; if (gi != null) gi.Center.Y += maxY - gi.BoundingBox.BottomRight.Y; }
             Redraw(true);
         }
 
@@ -1866,7 +1894,7 @@ namespace GerberCombinerBuilder
             PushUndo();
             double minY = double.MaxValue;
             foreach (var inst in SelectedInstances) { var gi = inst as GerberInstance; if (gi != null && gi.BoundingBox.TopLeft.Y < minY) minY = gi.BoundingBox.TopLeft.Y; }
-            foreach (var inst in SelectedInstances) { var gi = inst as GerberInstance; if (gi != null) gi.Center.Y += (float)(minY - gi.BoundingBox.TopLeft.Y); }
+            foreach (var inst in SelectedInstances) { var gi = inst as GerberInstance; if (gi != null) gi.Center.Y += minY - gi.BoundingBox.TopLeft.Y; }
             Redraw(true);
         }
 
@@ -1875,7 +1903,7 @@ namespace GerberCombinerBuilder
             if (SelectedInstances.Count < 2) return;
             PushUndo();
             double avg = SelectedInstances.OfType<GerberInstance>().Average(i => (i.BoundingBox.TopLeft.X + i.BoundingBox.BottomRight.X) / 2);
-            foreach (var inst in SelectedInstances) { var gi = inst as GerberInstance; if (gi != null) gi.Center.X += (float)(avg - (gi.BoundingBox.TopLeft.X + gi.BoundingBox.BottomRight.X) / 2); }
+            foreach (var inst in SelectedInstances) { var gi = inst as GerberInstance; if (gi != null) gi.Center.X += avg - (gi.BoundingBox.TopLeft.X + gi.BoundingBox.BottomRight.X) / 2; }
             Redraw(true);
         }
 
@@ -1884,7 +1912,7 @@ namespace GerberCombinerBuilder
             if (SelectedInstances.Count < 2) return;
             PushUndo();
             double avg = SelectedInstances.OfType<GerberInstance>().Average(i => (i.BoundingBox.TopLeft.Y + i.BoundingBox.BottomRight.Y) / 2);
-            foreach (var inst in SelectedInstances) { var gi = inst as GerberInstance; if (gi != null) gi.Center.Y += (float)(avg - (gi.BoundingBox.TopLeft.Y + gi.BoundingBox.BottomRight.Y) / 2); }
+            foreach (var inst in SelectedInstances) { var gi = inst as GerberInstance; if (gi != null) gi.Center.Y += avg - (gi.BoundingBox.TopLeft.Y + gi.BoundingBox.BottomRight.Y) / 2; }
             Redraw(true);
         }
 
@@ -1925,7 +1953,7 @@ namespace GerberCombinerBuilder
         private string SerializeState()
         {
             XmlSerializer serializer = new XmlSerializer(typeof(GerberLayoutSet));
-            using (StringWriter writer = new StringWriter())
+            using (StringWriter writer = new StringWriter(CultureInfo.InvariantCulture))
             {
                 serializer.Serialize(writer, ThePanel.TheSet);
                 return writer.ToString();
@@ -2004,14 +2032,14 @@ namespace GerberCombinerBuilder
 
             foreach (var inst in ThePanel.TheSet.Instances)
             {
-                inst.Center.X += (float)shiftX;
-                inst.Center.Y += (float)shiftY;
+                inst.Center.X += shiftX;
+                inst.Center.Y += shiftY;
             }
             
             foreach (var tab in ThePanel.TheSet.Tabs)
             {
-                tab.Center.X += (float)shiftX;
-                tab.Center.Y += (float)shiftY;
+                tab.Center.X += shiftX;
+                tab.Center.Y += shiftY;
             }
 
 
@@ -2043,18 +2071,18 @@ namespace GerberCombinerBuilder
             else
             {
                 var OldZoom = Zoom;
-                Zoom += diff * 0.2;
+                Zoom = Math.Max(MinZoom, Math.Min(Zoom + diff * 0.2, MaxZoom));
                 // var det = Zoom / LastScale;
 
                 // The shift in centerpoint needed to keep the mouse fixed on the same world coordinate is:
                 // Shift = MouseScreenRel * (1/OldZoom - 1/NewZoom) 
 
-                double Factor = (1.0 / OldZoom - 1.0 / Zoom);
+                double Factor = (Zoom - OldZoom) / (OldZoom * Zoom);
                 CenterPoint.X += ZoomAnimationCenter.X * Factor;
                 CenterPoint.Y += ZoomAnimationCenter.Y * Factor;
             }
             if (ZoomLabel != null)
-                ZoomLabel.Text = string.Format("Zoom: {0:F1}x", Zoom);
+                ZoomLabel.Text = string.Format(CultureInfo.InvariantCulture, "Zoom: {0:F1}x", Zoom);
             UpdateScrollers();
             Redraw(false);
         }

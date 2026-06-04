@@ -163,7 +163,7 @@ namespace GerberLibrary
             int freeid = 10;
             foreach(var t in Tools)
             {
-                if (d.Radius == t.Value.Radius) return t.Value;
+                if (Math.Abs(d.Radius - t.Value.Radius) < 1e-6) return t.Value;
                 if (t.Key >= freeid) freeid = t.Key + 1;
             }
             var T = new ExcellonTool() { Radius = d.Radius , ID = freeid};
@@ -404,7 +404,7 @@ namespace GerberLibrary
             GNF.DigitsBefore = 3;
             GNF.DigitsAfter = 3;
             GNF.OmitLeading = true;
-            double Scaler = 1.0f;
+            double Scaler = 1.0;
             bool FormatSpecified = false;
             bool NumberSpecHad = false;
             double LastX = 0;

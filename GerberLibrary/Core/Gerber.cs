@@ -1067,7 +1067,7 @@ namespace GerberLibrary
 
             log.AddString(String.Format("Exporting {0} ({2},{3}mm) to {1} ({4},{5})", GerberFilename, BitmapFilename, WidthInMM, HeightInMM, Width, Height));
             GerberImageCreator GIC = new GerberImageCreator();
-            GIC.scale = dpi / 25.4f; // dpi
+            GIC.scale = dpi / 25.4; // dpi
             GIC.BoundingBox.AddBox(PLS.BoundingBox);
 
             var Tr = GIC.BuildMatrix(Width, Height);
@@ -1180,7 +1180,7 @@ namespace GerberLibrary
 
             Console.WriteLine("Progress: Exporting {0} ({2},{3}mm) to {1} ({4},{5})", GerberFilename, BitmapFilename, WidthInMM, HeightInMM, Width, Height);
             GerberImageCreator GIC = new GerberImageCreator();
-            GIC.scale = dpi / 25.4f; // dpi
+            GIC.scale = dpi / 25.4; // dpi
             GIC.BoundingBox.AddBox(PLS.BoundingBox);
 
             var Tr = GIC.BuildMatrix(Width, Height);
@@ -1293,7 +1293,7 @@ namespace GerberLibrary
 
                 D1 = Math.Sqrt(CX1 * CX1 + CY1 * CY1);
                 D2 = Math.Sqrt(CX2 * CX2 + CY2 * CY2);
-                if (D2 != 0) DRat = D1 / D2;
+                if (Math.Abs(D2) > 1e-10) DRat = D1 / D2;
 
                 S = Math.Atan2(LastY - CY, LastX - CX);
                 E = Math.Atan2(Y - CY, X - CX);

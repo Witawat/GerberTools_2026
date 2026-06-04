@@ -147,7 +147,7 @@ namespace GerberLibrary.Core.Primitives
             if (Vertices.Count == 0) return;
             PointD S = start();
             PointD E = end();
-            if (E.X != S.X || E.Y != S.Y)
+            if (Math.Abs(E.X - S.X) > 1e-9 || Math.Abs(E.Y - S.Y) > 1e-9)
             {
                 //   if (MyTool != null)
                 //   {
@@ -185,7 +185,7 @@ namespace GerberLibrary.Core.Primitives
             Polygon P = new Polygon();
             for (int i = 0; i < Count(); i++)
             {
-                P.Add(new IntPoint((long)(Vertices[i].X * 100000.0f), (long)(Vertices[i].Y * 100000.0f)));
+                P.Add(new IntPoint((long)(Vertices[i].X * 100000.0), (long)(Vertices[i].Y * 100000.0)));
             }
             return P;
 
@@ -195,7 +195,7 @@ namespace GerberLibrary.Core.Primitives
         {
             for (int i = 0; i < list.Count; i++)
             {
-                Add(list[i].X / 100000.0f, list[i].Y / 100000.0f);
+                Add(list[i].X / 100000.0, list[i].Y / 100000.0);
             }
             Close();
         }
@@ -212,7 +212,7 @@ namespace GerberLibrary.Core.Primitives
 
         //  public Tool MyTool;
 
-        public void FillTransformed(PolyLine c, PointD trans, float angle)
+        public void FillTransformed(PolyLine c, PointD trans, double angle)
         {
             double cx = Math.Cos(angle * Math.PI * 2 / 360.0);
             double sx = Math.Sin(angle * Math.PI * 2 / 360.0);
@@ -317,29 +317,9 @@ namespace GerberLibrary.Core.Primitives
 
         public PointD GetCentroid()
         {
-            double accumulatedArea = 0.0f;
-            double centerX = 0.0f;
-            double centerY = 0.0f;
-
-            for (int i = 0, j = Vertices.Count - 1; i < Vertices.Count; j = i++)
-            {
-                double temp = Vertices[i].X * Vertices[j].Y - Vertices[j].X * Vertices[i].Y;
-                accumulatedArea += temp;
-                centerX += (Vertices[i].X + Vertices[j].X) * temp;
-                centerY += (Vertices[i].Y + Vertices[j].Y) * temp;
-            }
-
-            if (accumulatedArea < 1E-7f)
-                return null;
-
-            accumulatedArea *= 3f;
-            return new PointD(centerX / accumulatedArea, centerY / accumulatedArea);
-        }
-
-        public PointD GetMidPoint()
-        {
-            double centerX = 0.0f;
-            double centerY = 0.0f;
+            double accumulatedArea = 0.0;
+            double centerX = 0.0;
+            double centerY = 0.0;
 
             for (int i = 0; i < Vertices.Count; i++)
             {
@@ -352,7 +332,7 @@ namespace GerberLibrary.Core.Primitives
                 return new PointD(0, 0);
             }
 
-            return new PointD(centerX / (float)Vertices.Count, centerY / (float)Vertices.Count);
+            return new PointD(centerX / (double)Vertices.Count, centerY / (double)Vertices.Count);
         }
 
         public List<PointD> GetIntersections(PointD diffA, PointD cA)

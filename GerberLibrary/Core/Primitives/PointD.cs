@@ -70,12 +70,12 @@ namespace GerberLibrary.Core.Primitives
             double ABAPproduct = AP.Dot(AB);    //The DOT product of a_to_p and a_to_b     
             double distance = ABAPproduct / magnitudeAB; //The normalized "distance" from a to your closest point  
 
-            if (distance < 0)     //Check if P projection is over vectorAB     
+            if (distance < -1e-12)
             {
                 return A;
 
             }
-            else if (distance > 1)
+            else if (distance > 1 + 1e-12)
             {
                 return B;
             }
@@ -116,32 +116,32 @@ namespace GerberLibrary.Core.Primitives
         public double X;
         public double Y;
 
+        public const double Epsilon = 1e-9;
+
         public override bool Equals(object B)
         {
             if (base.Equals(B)) return true;
             if (B.GetType() == typeof(PointD))
             {
                 PointD pB = B as PointD;
-                if (pB.X == X && pB.Y == Y) return true;
+                if (Math.Abs(pB.X - X) < Epsilon && Math.Abs(pB.Y - Y) < Epsilon) return true;
             }
             return false;
         }
 
         public static bool operator ==(PointD a, PointD b)
         {
-            // If both are null, or both are same instance, return true.
             if (System.Object.ReferenceEquals(a, b))
             {
                 return true;
             }
 
-            // If one is null, but not both, return false.
             if (((object)a == null) || ((object)b == null))
             {
                 return false;
             }
 
-            return a.X == b.X && a.Y == b.Y;
+            return Math.Abs(a.X - b.X) < Epsilon && Math.Abs(a.Y - b.Y) < Epsilon;
         }
 
         public static bool operator !=(PointD x, PointD y)

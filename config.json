@@ -1,0 +1,18 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "command": {
+    "setup": {
+      "template": "อ่าน code ทั้งหมดแล้วเขียนเป็นข้อมูลที่เกี่ยวกับ project นี้ เก็บไว้ที่ไฟล์ AGENT.md และ KNOWLEGED_BASE.md เพื่อใช้งานในการพัฒนา project นี้",
+      "description": "อ่าน code ทั้งหมดแล้วเขียนเป็นข้อมูล AGENT.md และ KNOWLEGED_BASE.md "
+    },
+    "commit": {
+      "template": "เรียก `git status` และ `git diff --stat` เพื่อดูการเปลี่ยนแปลงที่เกิดขึ้น จากนั้น stage ไฟล์ที่ถูกแก้ไขทั้งหมดด้วย `git add -A` แล้วเขียน commit message สั้นกระชับตามสไตล์ของโปรเจกต์นี้ (ดู reference จาก `git log --oneline -10`) สุดท้ายรัน `git commit -m \"<message>\"` และ `git push` สรุปผลลัพธ์ให้ผู้ใช้ทราบด้วย",
+      "description": "Stage ไฟล์ทั้งหมด, commit ด้วย message อัตโนมัติ, และ push"
+    }
+  },
+  "plugin": [],
+  "autoupdate": true,
+  "username": "XSoFTz",
+  "mode": {},
+  "agent": {}
+}

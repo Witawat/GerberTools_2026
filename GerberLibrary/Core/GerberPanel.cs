@@ -108,6 +108,8 @@ namespace GerberLibrary
     {
         public GerberLayoutSet TheSet;
 
+        public static bool DebugBreakTabLog = false;
+
         public GerberPanel(double width = 100, double height = 100)
         {
             TheSet = new GerberLayoutSet();
@@ -415,7 +417,7 @@ namespace GerberLibrary
                         }
                     }
 
-                    if (furthestdistB != 0 && furthestdistA != 0)
+                    if (Math.Abs(furthestdistB) > 1e-9 && Math.Abs(furthestdistA) > 1e-9)
                     {
                         furthestA = furthestA.Rotate(iA.Angle);
                         furthestA.X += iA.Center.X;
@@ -497,7 +499,7 @@ namespace GerberLibrary
                 Polygons clips = new Polygons();
 
                 clips.Add(b);
-                Polygons clips2 = Clipper.OffsetPolygons(clips, offsetinMM * 100000.0f, JoinType.jtMiter);
+                Polygons clips2 = Clipper.OffsetPolygons(clips, offsetinMM * 100000.0, JoinType.jtMiter);
 
                 Clipper cp = new Clipper();
                 cp.AddPolygons(BoardMinusCombinedInstanceOutline, PolyType.ptSubject);
@@ -508,8 +510,8 @@ namespace GerberLibrary
 
             //CombinedOutline.Clear();
 
-            Polygons shrunk = Clipper.OffsetPolygons(BoardMinusCombinedInstanceOutline, -retractMM * 100000.0f, JoinType.jtRound);
-            Polygons expanded = Clipper.OffsetPolygons(shrunk, retractMM * 100000.0f, JoinType.jtRound);
+            Polygons shrunk = Clipper.OffsetPolygons(BoardMinusCombinedInstanceOutline, -retractMM * 100000.0, JoinType.jtRound);
+            Polygons expanded = Clipper.OffsetPolygons(shrunk, retractMM * 100000.0, JoinType.jtRound);
 
             //CombinedOutline.Clear();
             //foreach (var b in TheSet.Tabs)
@@ -565,7 +567,7 @@ namespace GerberLibrary
                     {
                         bool doit = false;
                         if (a.LastCenter == null) doit = true;
-                        if (doit || (PointD.Distance(a.Center, a.LastCenter) != 0 || a.Angle != a.LastAngle))
+                        if (doit || (PointD.Distance(a.Center, a.LastCenter) > 1e-9 || Math.Abs(a.Angle - a.LastAngle) > 1e-9))
                         {
                             a.RebuildTransformed(GerberOutlines[a.GerberPath], TheSet.ExtraTabDrillDistance);
                         }
@@ -614,7 +616,7 @@ namespace GerberLibrary
             var T = G.Transform.Clone();
 
             G.TranslateTransform((float)b.Center.X, (float)b.Center.Y);
-            G.RotateTransform(b.Angle);
+            G.RotateTransform((float)b.Angle);
             if (b.GetType() == typeof(GerberInstance))
             {
                 GerberInstance GI = b as GerberInstance;
@@ -652,7 +654,7 @@ namespace GerberLibrary
             var T = G.Transform.Clone();
 
             G.TranslateTransform((float)b.Center.X, (float)b.Center.Y);
-            G.RotateTransform(b.Angle);
+            G.RotateTransform((float)b.Angle);
             Pen P = new Pen(C, PW) { LineJoin = System.Drawing.Drawing2D.LineJoin.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round, StartCap = System.Drawing.Drawing2D.LineCap.Round };
             Pen ActiveP = new Pen(Color.Blue, PW * 3) { LineJoin = System.Drawing.Drawing2D.LineJoin.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round, StartCap = System.Drawing.Drawing2D.LineCap.Round };
             Pen ActivePD = new Pen(Color.Green, PW * 2) { LineJoin = System.Drawing.Drawing2D.LineJoin.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round, StartCap = System.Drawing.Drawing2D.LineCap.Round };
@@ -736,22 +738,18 @@ namespace GerberLibrary
                         if (active)
                         {
                             DrawShapeBG(G, ActivePD, Shape);
-                            //  DrawShapeNormals(G, ActivePD, Shape);
+                            DrawShape(G, ActiveP, Shape);
                         }
                         else
                         {
-                            DrawShape(G, active ? ActiveP : P, Shape);
+                            DrawShape(G, P, Shape);
                         }
-                    }
-                    foreach (var Shape in a.TheGerber.DisplayShapes)
-                    {
-                        DrawShape(G, active ? ActiveP : P, Shape);
                     }
                     var width = (int)(Math.Ceiling(a.TheGerber.BoundingBox.BottomRight.X - a.TheGerber.BoundingBox.TopLeft.X));
                     var height = (int)(Math.Ceiling(a.TheGerber.BoundingBox.BottomRight.Y - a.TheGerber.BoundingBox.TopLeft.Y));
 
-                    double ox = (float)(a.TheGerber.TranslationSinceLoad.X + a.TheGerber.BoundingBox.TopLeft.X) + width / 2;
-                    double oy = (float)(a.TheGerber.TranslationSinceLoad.Y + a.TheGerber.BoundingBox.TopLeft.Y + height / 2);
+                    double ox = width / 2.0;
+                    double oy = height / 2.0;
 
                     PointD Ext = G.MeasureString(Path.GetFileName(GI.GerberPath));
                     double Z = 1;
@@ -1001,6 +999,7 @@ namespace GerberLibrary
             public double Angle;
             public PointD Location = new PointD();
             public PointD Direction = new PointD();
+            public PolyLine Source = null;
             public override string ToString()
             {
                 return String.Format("{0},{1} , {2}", Start ? "start" : "end", Angle, Location);
@@ -1009,8 +1008,29 @@ namespace GerberLibrary
 
         List<PolyLine> GeneratedArcs = new List<PolyLine>();
 
+        static string DebugLogPath()
+        {
+            return System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Breaktab_Debug.log");
+        }
+
+        static void DebugLog(string text)
+        {
+            if (!DebugBreakTabLog) return;
+            try { System.IO.File.AppendAllText(DebugLogPath(), text); } catch { }
+        }
+
         bool GenerateTabArcs(List<TabIntersection> intersects, BreakTab t, double drillradius = 1)
         {
+            if (DebugBreakTabLog)
+            {
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine($"=== TAB at ({t.Center.X:F4}, {t.Center.Y:F4}) Radius={t.Radius:F3} ===");
+                sb.AppendLine($"  Intersections: {intersects.Count}");
+                foreach (var ii in (from i in intersects orderby i.Angle select i))
+                    sb.AppendLine($"  Angle={ii.Angle:F4}({ii.Angle*180/Math.PI:F1}deg) Start={ii.Start} Pos=({ii.Location.X:F3},{ii.Location.Y:F3}) Dir=({ii.Direction.X:F3},{ii.Direction.Y:F3}) Src={ii.Source?.GetHashCode()??0:X}");
+                DebugLog(sb.ToString());
+            }
+
             if (t.Errors.Count > 0) return false;
 
             if (intersects.Count < 4)
@@ -1025,6 +1045,7 @@ namespace GerberLibrary
             bool result = true;
             intersects = (from i in intersects orderby i.Angle select i).ToList();
             //intersects.Sort(x => x.Angle);
+
             int had = 0;
             int current = 0;
             while (intersects[current].Start == true) current = (current + 1) % intersects.Count;
@@ -1049,11 +1070,11 @@ namespace GerberLibrary
 
                 if ((center - PStart).Dot(StartNorm) < 0)
                 {
-                    //     StartNorm = StartNorm * -1;
+                    StartNorm = StartNorm * -1;
                 }
                 if ((center - PEnd).Dot(EndNorm) < 0)
                 {
-                    //  EndNorm = EndNorm * -1;
+                    EndNorm = EndNorm * -1;
                 }
                 if (Helpers.Distance(PStart, PEnd) < drillradius * 2)
                 {
@@ -1064,7 +1085,7 @@ namespace GerberLibrary
                 var C1 = PStart + StartNorm * drillradius;
                 var C2 = PEnd + EndNorm * drillradius;
 
-                var DF = C2 - C1;
+                var DF = (Helpers.Distance(C1, C2) < 0.5) ? PEnd - PStart : C2 - C1;
                 DF.Normalize();
                 var DR = DF.Rotate(90);
 
@@ -1084,11 +1105,13 @@ namespace GerberLibrary
                 {
                     t.AddError("angle too big");
                     result = false;
+                    DebugLog($"!!! A1 TOO BIG: |AE-AS|={Math.Abs(AE-AS):F4}rad({Math.Abs(AE-AS)*180/Math.PI:F1}deg) >= 1.9pi={Math.PI*1.9:F4}\r\n");
                 }
                 if (Math.Abs(BE - BS) >= Math.PI * 1.9)
                 {
                     t.AddError("angle too big");
                     result = false;
+                    DebugLog($"!!! A2 TOO BIG: |BE-BS|={Math.Abs(BE-BS):F4}rad({Math.Abs(BE-BS)*180/Math.PI:F1}deg) >= 1.9pi={Math.PI*1.9:F4}\r\n");
                 }
             }
 
@@ -1113,12 +1136,12 @@ namespace GerberLibrary
 
                 if ((center - PStart).Dot(StartNorm) < 0)
                 {
-                    //     StartNorm = StartNorm * -1;
+                    StartNorm = StartNorm * -1;
                 }
 
                 if ((center - PEnd).Dot(EndNorm) < 0)
                 {
-                    //  EndNorm = EndNorm * -1;
+                    EndNorm = EndNorm * -1;
                 }
 
                 if (Helpers.Distance(PStart, PEnd) < drillradius * 2)
@@ -1132,7 +1155,7 @@ namespace GerberLibrary
                 
                 //if centers are at the same location then the linesegment between them does not exist.  This results in a generating a bad unit vector and 
                 //therfore bad angles and bad arcs.  If the centers are at the same location use the linesgment between the start and end points instead.
-                var DF = (C1 != C2) ? C2 - C1 : PEnd - PStart;
+                var DF = (Helpers.Distance(C1, C2) < 0.5) ? PEnd - PStart : C2 - C1;
                 DF.Normalize();
                 var DR = DF.Rotate(90);
 
@@ -1151,11 +1174,13 @@ namespace GerberLibrary
                 if (Math.Abs(AE - AS) >= Math.PI * 2)
                 {
                     t.AddError("angle too big");
+                    DebugLog($"!!! A1 TOO BIG [pass2]: |AE-AS|={Math.Abs(AE-AS):F4}rad({Math.Abs(AE-AS)*180/Math.PI:F1}deg) >= 2pi={Math.PI*2:F4}\r\n");
                 }
 
                 if (Math.Abs(BE - BS) >= Math.PI * 2)
                 {
                     t.AddError("angle too big");
+                    DebugLog($"!!! A2 TOO BIG [pass2]: |BE-BS|={Math.Abs(BE-BS):F4}rad({Math.Abs(BE-BS)*180/Math.PI:F1}deg) >= 2pi={Math.PI*2:F4}\r\n");
                 }
                 //while (AS < 0 || AE < 0) { AS += Math.PI * 2; AE += Math.PI * 2; };
                 //while (BS < 0 || BE < 0) { BS += Math.PI * 2; BE += Math.PI * 2; };
@@ -1421,7 +1446,7 @@ namespace GerberLibrary
                 t.EvenOdd = 0;
                 t.Errors.Clear();
                 List<TabIntersection> Intersections = new List<TabIntersection>();
-                float R2 = t.Radius * t.Radius;
+                double R2 = t.Radius * t.Radius;
                 foreach (var b in TheSet.Instances.Where(x => x.IgnoreOutline == false))
                 {
                     // Polygons clips = new Polygons();
@@ -1541,6 +1566,7 @@ namespace GerberLibrary
                         TI.Direction.X = (V1.X - V2.X) / Len;
                         TI.Direction.Y = (V1.Y - V2.Y) / Len;
                         TI.Angle = Helpers.AngleBetween(t.Center, I1);
+                        TI.Source = PL;
                         //bool addedV1 = false;
 
                         bool V1Inside = Helpers.Distance(new PointD(t.Center.X, t.Center.Y), V1) < t.Radius;
@@ -1548,13 +1574,12 @@ namespace GerberLibrary
 
                         if (Helpers.Distance(new PointD(t.Center.X, t.Center.Y), V1) < t.Radius)
                         {
-                          //  addedV1 = true;
-                            TI.Start = true;
+                            TI.Start = false;
                         }
 
                         if (Helpers.Distance(new PointD(t.Center.X, t.Center.Y), V2) < t.Radius)
                         {
-                            TI.Start = false;
+                            TI.Start = true;
                         }
 
                         Intersections.Add(TI);
@@ -1568,6 +1593,7 @@ namespace GerberLibrary
                         TI1.Angle = Helpers.AngleBetween(t.Center, I1);
                         TI1.Direction.X = (V1.X - V2.X) / Len;
                         TI1.Direction.Y = (V1.Y - V2.Y) / Len;
+                        TI1.Source = PL;
                         Intersections.Add(TI1);
 
                         TabIntersection TI2 = new TabIntersection();
@@ -1576,6 +1602,7 @@ namespace GerberLibrary
                         TI2.Direction.X = TI1.Direction.X;
                         TI2.Direction.Y = TI1.Direction.Y;
                         TI2.Angle = Helpers.AngleBetween(t.Center, I2);
+                        TI2.Source = PL;
                         Intersections.Add(TI2);
 
                     }
@@ -2054,7 +2081,7 @@ namespace GerberLibrary
                         {
                             a.Item1.Angle = 90;
                             a.Item1.Center = (Coord - OL.TheGerber.BoundingBox.TopLeft);
-                            a.Item1.Center.Y += (float)RD.Width;
+                            a.Item1.Center.Y += RD.Width;
 
                             // a.Item1.Center.X += 1;
                             // a.Item1.Center.Y += 1;
@@ -2128,8 +2155,8 @@ namespace GerberLibrary
 
                             a.Item1.Center = (new PointD(R.x, R.y));// - OL.TheGerber.TopLeft).ToF();
 
-                            a.Item1.Center.X += (float)OL.TheGerber.BoundingBox.TopLeft.Y;
-                            a.Item1.Center.Y -= (float)OL.TheGerber.BoundingBox.TopLeft.X;
+                            a.Item1.Center.X += OL.TheGerber.BoundingBox.TopLeft.Y;
+                            a.Item1.Center.Y -= OL.TheGerber.BoundingBox.TopLeft.X;
 
                             a.Item1.Angle = 90;
                             //                            a.Item1.Center.Y += RD.width;
@@ -2200,8 +2227,8 @@ namespace GerberLibrary
 
     public class AngledThing
     {
-        public PointD Center = new PointD(); // float for serializer... need to investigate
-        public float Angle;
+        public PointD Center = new PointD();
+        public double Angle;
 
 
 
@@ -2219,7 +2246,7 @@ namespace GerberLibrary
         public List<List<PolyLine>> OffsetOutlines = new List<List<PolyLine>>();
 
         [System.Xml.Serialization.XmlIgnore]
-        internal float LastAngle;
+        internal double LastAngle;
         [System.Xml.Serialization.XmlIgnore]
         internal PointD LastCenter;
 
@@ -2242,7 +2269,7 @@ namespace GerberLibrary
                 bool winding = Clipper.Orientation(poly);
 
                 clips.Add(poly);
-                double offset = 0.25 * 100000.0f + extradrilldistance;
+                double offset = 0.25 * 100000.0 + extradrilldistance;
                 if (winding == false) offset *= -1;
                 Polygons clips2 = Clipper.OffsetPolygons(clips, offset, JoinType.jtRound);
                 foreach (var a in clips2)
@@ -2282,7 +2309,7 @@ namespace GerberLibrary
 
     public class BreakTab : AngledThing
     {
-        public float Radius;
+        public double Radius;
         public bool Valid;
 
         [System.Xml.Serialization.XmlIgnore]
@@ -2563,6 +2590,7 @@ namespace GerberLibrary
                 {
                     a.CheckIfHole();
                 }
+                TheGerber.Normalize();
             }
             else
             {
@@ -2579,7 +2607,7 @@ namespace GerberLibrary
             {
                 a.CheckIfHole();
             }
-
+            TheGerber.Normalize();
         }
 
         public PointD GetActualCenter()

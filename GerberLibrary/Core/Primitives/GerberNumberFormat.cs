@@ -125,7 +125,7 @@ namespace GerberLibrary.Core.Primitives
 
         public string Format(double p)
         {
-            Int64 R = (Int64)(p * Math.Pow(10, DigitsAfter));
+            Int64 R = (Int64)Math.Round(p * Math.Pow(10, DigitsAfter), MidpointRounding.AwayFromZero);
             return R.ToString("D" + (DigitsAfter + DigitsBefore).ToString());
         }
 

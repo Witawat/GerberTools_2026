@@ -9,20 +9,22 @@ $CLI_OUT = "$OUT\CommandLine"
 
 # Check .NET SDK
 $sdkVer = dotnet --version 2>$null
-$hasNet9 = ($sdkVer -match "^[0-9]+" -and [int]$Matches[0] -ge 9)
 
 Write-Host "========================================"
 Write-Host "  GerberTools Build Script [$Config]"
+Write-Host "  .NET SDK: $sdkVer"
 Write-Host "========================================"
-if (-not $hasNet9) {
-    Write-Host ".NET SDK $sdkVer - net9.0 projects will be SKIPPED"
-}
 Write-Host ""
 
 # Clean output
 if (Test-Path $OUT) { Remove-Item -Recurse -Force $OUT }
 New-Item -ItemType Directory -Force $OUT | Out-Null
 New-Item -ItemType Directory -Force $CLI_OUT | Out-Null
+
+# Clean all bin directories
+Write-Host "Cleaning old bin files..."
+dotnet clean "$PSScriptRoot\GerberTools.sln" -c $Config --nologo -v q 2>&1 | Out-Null
+Write-Host ""
 
 function Build($proj) {
     Write-Host "  Building: $proj"
@@ -55,10 +57,6 @@ Build "GerberLibrary\GerberLibrary.csproj"
 Build "EagleLoaders\EagleLoaders.csproj"
 Build "Project_Utilities\TilingLibrary\TINRS-ArtWork.csproj"
 Build "GerberPanelizer\QuickFont\QuickFont.csproj"
-if ($hasNet9) {
-    Build "GerberLibrary.Core\GerberLibrary.Core.csproj"
-    Build "TilingLibrary.Core\TilingLibrary.Core.csproj"
-}
 Write-Host "  [OK]`n"
 
 # =========================================
@@ -82,14 +80,7 @@ $gui = @(
     @{p="GerberProjects\OpampCalculator\OpampCalculator.csproj";          o="OpampCalculator";           s="GerberProjects\OpampCalculator"; f="net48"}
 )
 
-if ($hasNet9) {
-    $gui += @(
-        @{p="GerberDrop\GerberDrop.csproj";                               o="GerberDrop";                s="GerberDrop";                f="net9.0"},
-        @{p="TiNRS-Tiler\TiNRS.Tiler.csproj";                              o="TiNRS-Tiler";               s="TiNRS-Tiler";               f="net9.0"}
-    )
-} else {
-    Write-Host "  SKIPPED: GerberDrop, TiNRS-Tiler (net9.0)"
-}
+Write-Host ""
 
 foreach ($g in $gui) {
     Build $g.p
@@ -126,19 +117,7 @@ $cli = @(
     @{p="GerberProjects\FrameCreatorTest\FrameCreatorTest.csproj";            s="GerberProjects\FrameCreatorTest"; f="net48"}
 )
 
-if ($hasNet9) {
-    $cli += @(
-        @{p="GerberDebugger\GerberDebugger.csproj";                            s="GerberDebugger";                f="net9.0"},
-        @{p="GerberSplitter\GerberSplitter.csproj";                            s="GerberSplitter";                f="net9.0"},
-        @{p="GerberToDxf\GerberToDxf\GerberToDxf.csproj";                      s="GerberToDxf\GerberToDxf";        f="net9.0"},
-        @{p="GerberToImage\GerberToImage.csproj";                              s="GerberToImage";                 f="net9.0"},
-        @{p="GerberToOutline\GerberToOutline.csproj";                          s="GerberToOutline";               f="net9.0"},
-        @{p="Tests\GerberTools.TestGenerator\GerberTools.TestGenerator.csproj"; s="Tests\GerberTools.TestGenerator"; f="net9.0"},
-        @{p="MigrationTest\MigrationTest.csproj";                              s="MigrationTest";                 f="net9.0"}
-    )
-} else {
-    Write-Host "  SKIPPED: 7 net9.0 CLI tools"
-}
+Write-Host ""
 
 foreach ($c in $cli) {
     Build $c.p

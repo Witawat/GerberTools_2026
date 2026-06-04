@@ -1406,25 +1406,30 @@ namespace GerberLibrary.Core
         {
             if (minorGrid < 0) return;
 
+            double dMinor = minorGrid;
+            double dMajor = majorGrid;
+            double dWidth = width;
+            double dHeight = height;
+
             // System.Drawing.ColorTranslator.FromHtml("#c4e5ff")
             Pen P = new Pen(Color.ParseHex("#c4e5ff"), PW * 0.5f);
-            for (float X = 0; X <= width; X += minorGrid)
+            for (double X = 0; X <= dWidth; X += dMinor)
             {
-                G.DrawLine(P, X, 0, X, height);
+                G.DrawLine(P, (float)X, 0, (float)X, height);
             }
-            for (float X = 0; X <= height; X += minorGrid)
+            for (double Y = 0; Y <= dHeight; Y += dMinor)
             {
-                G.DrawLine(P, 0.0f, X, width, X);
+                G.DrawLine(P, 0.0f, (float)Y, width, (float)Y);
             }
             // System.Drawing.ColorTranslator.FromHtml("#bad7ed")
             P = new Pen(Color.ParseHex("#bad7ed"), PW);
-            for (float X = 0; X <= width; X += majorGrid)
+            for (double X = 0; X <= dWidth; X += dMajor)
             {
-                G.DrawLine(P, X, 0, X, height);
+                G.DrawLine(P, (float)X, 0, (float)X, height);
             }
-            for (float X = 0; X <= height; X += majorGrid)
+            for (double Y = 0; Y <= dHeight; Y += dMajor)
             {
-                G.DrawLine(P, 0.0f, X, width, X);
+                G.DrawLine(P, 0.0f, (float)Y, width, (float)Y);
             }
         }
 
