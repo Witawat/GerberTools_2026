@@ -1,0 +1,11 @@
+G04 KiCad v8 Gerber - Top Solder Mask (F_Mask)*
+%FSLAX46Y46*%
+%MOMM*%
+%TF.FileFunction,Soldermask,Top*%
+%TF.FilePolarity,Positive*%
+%LPD*%
+G01*
+%ADD10C,0.600*%
+X3000000Y3000000D03*
+X7000000Y7000000D03*
+M02*

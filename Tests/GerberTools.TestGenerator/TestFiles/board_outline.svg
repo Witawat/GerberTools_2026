@@ -1,0 +1,13 @@
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" >
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" width="10000" height="10000">
+<line x1="166.59999084472656" y1="0" x2="166.59999084472656" y2="100" stroke="rgba(187,195,222,1)" stroke-width="0.10000000149011612" />
+<line x1="100" y1="0" x2="100" y2="100" stroke="rgba(187,195,222,1)" stroke-width="0.10000000149011612" />
+<line x1="166.59999084472656" y1="100" x2="66.5999984741211" y2="100" stroke="rgba(187,195,222,1)" stroke-width="0.10000000149011612" />
+<line x1="100" y1="100" x2="0" y2="100" stroke="rgba(187,195,222,1)" stroke-width="0.10000000149011612" />
+<line x1="66.5999984741211" y1="100" x2="66.5999984741211" y2="0" stroke="rgba(187,195,222,1)" stroke-width="0.10000000149011612" />
+<line x1="0" y1="100" x2="0" y2="0" stroke="rgba(187,195,222,1)" stroke-width="0.10000000149011612" />
+<line x1="66.5999984741211" y1="0" x2="166.59999084472656" y2="0" stroke="rgba(187,195,222,1)" stroke-width="0.10000000149011612" />
+<line x1="0" y1="0" x2="100" y2="0" stroke="rgba(187,195,222,1)" stroke-width="0.10000000149011612" />
+<line x1="166.59999084472656" y1="0" x2="166.59999084472656" y2="0" stroke="rgba(187,195,222,1)" stroke-width="0.10000000149011612" />
+<line x1="100" y1="0" x2="100" y2="0" stroke="rgba(187,195,222,1)" stroke-width="0.10000000149011612" />
+</svg>

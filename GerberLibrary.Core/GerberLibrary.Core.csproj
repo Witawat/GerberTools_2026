@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>GerberLibrary</RootNamespace>
+    <AssemblyName>GerberLibrary.Core</AssemblyName>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- System.Drawing.Common for cross-platform (temporary - will migrate to ImageSharp) -->
+    <!-- System.Drawing.Common removed for cross-platform compatibility -->
+    
+    <!-- Cross-platform image processing - using latest version to avoid vulnerabilities -->
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
+    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.5" />
+    
+    <!-- Compression - using SharpZipLib as DotNetZip has vulnerabilities -->
+    <PackageReference Include="SharpZipLib" Version="1.4.2" />
+    
+    <!-- Geometry and triangulation -->
+    <PackageReference Include="Triangle" Version="0.0.6-beta3" />
+    
+    <!-- Excel support - using ExcelDataReader instead of old ExcelLibrary -->
+    <PackageReference Include="ExcelDataReader" Version="3.7.0" />
+    <PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../GerberLibrary/Font.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

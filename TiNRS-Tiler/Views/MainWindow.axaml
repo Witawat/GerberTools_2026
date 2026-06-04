@@ -1,0 +1,278 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:TiNRS.Tiler.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+        x:Class="TiNRS.Tiler.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="{Binding WindowTitle}"
+        Width="1200" Height="800"
+        Foreground="White"
+        Background="#1E1E1E">
+
+    <Design.DataContext>
+        <vm:MainViewModel/>
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Menu Bar -->
+        <Menu Grid.Row="0">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open Mask..." Command="{Binding OpenMaskCommand}" />
+                <Separator />
+                <MenuItem Header="Save as _SVG..." Command="{Binding SaveSvgCommand}" />
+                <MenuItem Header="Save as _Gerber..." Command="{Binding SaveGerberCommand}" />
+                <MenuItem Header="Save as _Image..." Command="{Binding SaveImageCommand}" />
+                <Separator />
+                <MenuItem Header="E_xit" />
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="_About" />
+            </MenuItem>
+        </Menu>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1" ColumnDefinitions="300,*">
+            <!-- Settings Panel -->
+            <ScrollViewer Grid.Column="0" Background="#2D2D2D">
+                <StackPanel Margin="10" Spacing="10">
+                    <!-- Tiling Type -->
+                    <TextBlock Text="Tiling Type" FontWeight="Bold" />
+                    <ComboBox ItemsSource="{Binding TilingTypes}"
+                              SelectedValue="{Binding Settings.TileType}"
+                              SelectedValueBinding="{Binding Type}"
+                              DisplayMemberBinding="{Binding DisplayName}"
+                              HorizontalAlignment="Stretch" />
+
+                    <!-- Art Mode -->
+                    <TextBlock Text="Art Mode" FontWeight="Bold" Margin="0,10,0,0" />
+                    <ComboBox ItemsSource="{Binding ArtModes}"
+                              SelectedValue="{Binding Settings.Mode}"
+                              SelectedValueBinding="{Binding Mode}"
+                              DisplayMemberBinding="{Binding DisplayName}"
+                              HorizontalAlignment="Stretch" />
+
+                    <!-- Base Tile -->
+                    <TextBlock Text="Base Tile" FontWeight="Bold" Margin="0,10,0,0" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Slider Grid.Column="0" Minimum="0" Maximum="20" Value="{Binding Settings.BaseTile}" TickFrequency="1" IsSnapToTickEnabled="True" />
+                        <TextBlock Grid.Column="1" Text="{Binding Settings.BaseTile}" Width="30" Margin="5,0,0,0" />
+                    </Grid>
+
+                    <!-- Rounding -->
+                    <TextBlock Text="Rounding" FontWeight="Bold" Margin="0,10,0,0" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Slider Grid.Column="0" Minimum="0" Maximum="10000" Value="{Binding Settings.Rounding}" />
+                        <TextBlock Grid.Column="1" Text="{Binding Settings.Rounding, StringFormat={}{0:F0}}" Width="50" Margin="5,0,0,0" />
+                    </Grid>
+
+                    <!-- Max Subdivision Depth -->
+                    <TextBlock Text="Max Subdivision Depth" FontWeight="Bold" Margin="0,10,0,0" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Slider Grid.Column="0" 
+                                Minimum="1" Maximum="12" 
+                                Value="{Binding Settings.MaxSubDiv}"
+                                TickFrequency="1" IsSnapToTickEnabled="True" />
+                        <TextBlock Grid.Column="1" 
+                                   Text="{Binding Settings.MaxSubDiv}" 
+                                   Width="30" Margin="5,0,0,0" />
+                    </Grid>
+
+                    <!-- Rotation -->
+                    <TextBlock Text="Rotation (degrees)" FontWeight="Bold" Margin="0,10,0,0" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Slider Grid.Column="0" 
+                                Minimum="0" Maximum="360" 
+                                Value="{Binding Settings.DegreesOff}" />
+                        <TextBlock Grid.Column="1" 
+                                   Text="{Binding Settings.DegreesOff, StringFormat={}{0:F1}}" 
+                                   Width="50" Margin="5,0,0,0" />
+                    </Grid>
+
+                    <!-- Threshold -->
+                    <TextBlock Text="Threshold (%)" FontWeight="Bold" Margin="0,10,0,0" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Slider Grid.Column="0" 
+                                Minimum="0" Maximum="100" 
+                                Value="{Binding Settings.Threshold}" />
+                        <TextBlock Grid.Column="1" 
+                                   Text="{Binding Settings.Threshold}" 
+                                   Width="40" Margin="5,0,0,0" />
+                    </Grid>
+
+
+
+                    <!-- Scaling Settings -->
+                    <TextBlock Text="Scaling Settings" FontWeight="Bold" FontSize="16" Margin="0,15,0,5" />
+                    
+                    <TextBlock Text="Scaling Mode" FontWeight="Bold" />
+                    <ComboBox ItemsSource="{Binding ScalingModes}"
+                              SelectedValue="{Binding Settings.ScalingMode}"
+                              SelectedValueBinding="{Binding Mode}"
+                              DisplayMemberBinding="{Binding DisplayName}"
+                              HorizontalAlignment="Stretch" />
+
+                    <TextBlock Text="Scale Factor" FontWeight="Bold" Margin="0,5,0,0" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Slider Grid.Column="0" Minimum="-2.0" Maximum="2.0" Value="{Binding Settings.ScaleSmallerFactor}" />
+                        <TextBlock Grid.Column="1" Text="{Binding Settings.ScaleSmallerFactor, StringFormat={}{0:F3}}" Width="50" Margin="5,0,0,0" />
+                    </Grid>
+
+                    <TextBlock Text="Scale Smaller (Int)" FontWeight="Bold" Margin="0,5,0,0" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Slider Grid.Column="0" Minimum="-10" Maximum="10" Value="{Binding Settings.ScaleSmaller}" TickFrequency="1" IsSnapToTickEnabled="True" />
+                        <TextBlock Grid.Column="1" Text="{Binding Settings.ScaleSmaller}" Width="30" Margin="5,0,0,0" />
+                    </Grid>
+
+                    <TextBlock Text="Scale Smaller Level" FontWeight="Bold" Margin="0,5,0,0" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Slider Grid.Column="0" Minimum="0" Maximum="10" Value="{Binding Settings.ScaleSmallerLevel}" TickFrequency="1" IsSnapToTickEnabled="True" />
+                        <TextBlock Grid.Column="1" Text="{Binding Settings.ScaleSmallerLevel}" Width="30" Margin="5,0,0,0" />
+                    </Grid>
+
+                    <CheckBox Content="Always Subdivide" IsChecked="{Binding Settings.AlwaysSubdivide}" />
+
+                    <TextBlock Text="X Scale Settings" FontWeight="Bold" Margin="0,10,0,0" />
+                    <TextBlock Text="X Scale Smaller Level" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Slider Grid.Column="0" Minimum="0" Maximum="10" Value="{Binding Settings.XScaleSmallerLevel}" TickFrequency="1" IsSnapToTickEnabled="True" />
+                        <TextBlock Grid.Column="1" Text="{Binding Settings.XScaleSmallerLevel}" Width="30" Margin="5,0,0,0" />
+                    </Grid>
+                    
+                    <TextBlock Text="X Scale Center" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Slider Grid.Column="0" Minimum="0" Maximum="10" Value="{Binding Settings.XScaleCenter}" TickFrequency="1" IsSnapToTickEnabled="True" />
+                        <TextBlock Grid.Column="1" Text="{Binding Settings.XScaleCenter}" Width="30" Margin="5,0,0,0" />
+                    </Grid>
+
+                    <!-- Masking Section -->
+                    <TextBlock Text="Distance Masking" FontWeight="Bold" FontSize="16" Margin="0,15,0,5" />
+                    
+                    <TextBlock Text="Distance Scale" FontWeight="Bold" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Slider Grid.Column="0" Minimum="-1.0" Maximum="1.0" Value="{Binding Settings.DistanceToMaskScale}" />
+                        <TextBlock Grid.Column="1" Text="{Binding Settings.DistanceToMaskScale, StringFormat={}{0:F3}}" Width="50" Margin="5,0,0,0" />
+                    </Grid>
+
+                    <TextBlock Text="Distance Range" FontWeight="Bold" Margin="0,5,0,0" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Slider Grid.Column="0" Minimum="0" Maximum="2.0" Value="{Binding Settings.DistanceToMaskRange}" />
+                        <TextBlock Grid.Column="1" Text="{Binding Settings.DistanceToMaskRange, StringFormat={}{0:F3}}" Width="50" Margin="5,0,0,0" />
+                    </Grid>
+
+                    <!-- Options -->
+                    <TextBlock Text="Options" FontWeight="Bold" FontSize="16" Margin="0,15,0,5" />
+                    <CheckBox Content="Invert Source" IsChecked="{Binding Settings.InvertSource}" />
+                    <CheckBox Content="Invert Output" IsChecked="{Binding Settings.InvertOutput}" />
+                    <CheckBox Content="Symmetry" IsChecked="{Binding Settings.Symmetry}" />
+                    <CheckBox Content="Super Symmetry" IsChecked="{Binding Settings.SuperSymmetry}" />
+                    <CheckBox Content="Fill Polygons" IsChecked="{Binding Settings.FillPolygons}" />
+                    
+                    <!-- Colors -->
+                    <TextBlock Text="Colors" FontWeight="Bold" FontSize="16" Margin="0,15,0,5" />
+                    <Grid ColumnDefinitions="Auto, Auto, Auto" Margin="0,5">
+                        <StackPanel Margin="0,0,20,0">
+                             <TextBlock Text="Foreground" Margin="0,0,0,5" />
+                             <ColorPicker Color="{Binding Settings.ForegroundColor}" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,20,0">
+                             <TextBlock Text="Background" Margin="0,0,0,5" />
+                             <ColorPicker Color="{Binding Settings.BackgroundColor}" />
+                        </StackPanel>
+                        <StackPanel>
+                             <TextBlock Text="Highlight" Margin="0,0,0,5" />
+                             <ColorPicker Color="{Binding Settings.BackgroundHighlight}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- App Options -->
+                    <TextBlock Text="App Settings" FontWeight="Bold" Margin="0,10,0,0" />
+                    <CheckBox Content="Auto Update" IsChecked="{Binding Settings.AutoUpdate}" />
+                    <CheckBox Content="Auto Reload Mask" IsChecked="{Binding Settings.AutoReloadMask}" />
+
+                    <!-- Style -->
+                    <TextBlock Text="Style" FontWeight="Bold" FontSize="16" Margin="0,15,0,5" />
+                    <TextBlock Text="Stroke Width" FontWeight="Bold" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Slider Grid.Column="0" Minimum="0.1" Maximum="10.0" Value="{Binding Settings.StrokeWidth}" />
+                        <TextBlock Grid.Column="1" Text="{Binding Settings.StrokeWidth, StringFormat={}{0:F1}}" Width="50" Margin="5,0,0,0" />
+                    </Grid>
+
+                    <!-- Marcel Plating -->
+                    <TextBlock Text="Marcel Plating" FontWeight="Bold" FontSize="16" Margin="0,15,0,5" />
+                    <CheckBox Content="Enable Marcel Plating" IsChecked="{Binding Settings.MarcelPlating}" />
+                    
+                    <TextBlock Text="Ball Radius" Margin="0,5,0,0" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Slider Grid.Column="0" 
+                                Minimum="0.1" Maximum="10.0" 
+                                Value="{Binding Settings.BallRadius}"
+                                IsEnabled="{Binding Settings.MarcelPlating}" />
+                        <TextBlock Grid.Column="1" 
+                                   Text="{Binding Settings.BallRadius, StringFormat={}{0:F1}}" 
+                                   Width="50" Margin="5,0,0,0" />
+                    </Grid>
+
+                    <TextBlock Text="Gap" Margin="0,5,0,0" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Slider Grid.Column="0" 
+                                Minimum="0.1" Maximum="10.0" 
+                                Value="{Binding Settings.Gap}"
+                                IsEnabled="{Binding Settings.MarcelPlating}" />
+                        <TextBlock Grid.Column="1" 
+                                   Text="{Binding Settings.Gap, StringFormat={}{0:F1}}" 
+                                   Width="50" Margin="5,0,0,0" />
+                    </Grid>
+
+                    <!-- Actions -->
+                    <Button Content="Update Preview" 
+                            Command="{Binding TriggerUpdateCommand}"
+                            HorizontalAlignment="Stretch"
+                            Margin="0,20,0,0" />
+
+                    <!-- Progress -->
+                    <Border BorderBrush="#CCCCCC" BorderThickness="1" 
+                            Padding="10" Margin="0,10,0,0"
+                            IsVisible="{Binding IsRendering}">
+                        <StackPanel Spacing="5">
+                            <TextBlock Text="{Binding ProgressStage}" FontWeight="Bold" />
+                            <ProgressBar Value="{Binding ProgressPercent}" 
+                                       Minimum="0" Maximum="100" 
+                                       Height="20" />
+                            <Button Content="Cancel" 
+                                    Command="{Binding CancelRenderCommand}"
+                                    HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Preview Panel -->
+            <Border Grid.Column="1" Background="#121212" BorderBrush="#444444" BorderThickness="1">
+                <Grid>
+                    <Image Source="{Binding PreviewImage}" 
+                           Stretch="Uniform"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center" />
+                    
+                    <!-- Placeholder when no image -->
+                    <TextBlock Text="No preview available"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               FontSize="24"
+                               Foreground="#666666"
+                               IsVisible="{Binding !HasPreview}" />
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="2" Background="#2D2D2D" BorderBrush="#444444" BorderThickness="0,1,0,0">
+            <TextBlock Text="{Binding StatusMessage}" 
+                       Margin="10,5" 
+                       VerticalAlignment="Center" />
+        </Border>
+    </Grid>
+</Window>

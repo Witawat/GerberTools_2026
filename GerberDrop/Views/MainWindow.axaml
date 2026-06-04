@@ -1,0 +1,61 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:GerberDrop.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="450"
+        x:Class="GerberDrop.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="GerberDrop"
+        Width="600" Height="500"
+        DragDrop.AllowDrop="True">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="10">
+        <!-- Header / Drag Zone Info -->
+        <TextBlock Grid.Row="0" Text="Drop Gerber files or folders here!" 
+                   HorizontalAlignment="Center" VerticalAlignment="Center" 
+                   FontSize="20" FontWeight="Bold" Margin="0,10,0,10"/>
+
+        <!-- Preview Image -->
+        <Border Grid.Row="1" BorderBrush="Gray" BorderThickness="1" Margin="0,10" Background="Black">
+            <Image Source="{Binding PreviewImage}" Stretch="Uniform"/>
+        </Border>
+
+        <!-- Settings -->
+        <StackPanel Grid.Row="2" Spacing="10">
+            <WrapPanel Orientation="Horizontal">
+                <StackPanel Margin="5">
+                    <TextBlock Text="Solder Mask"/>
+                    <ComboBox ItemsSource="{Binding SolderMaskColors}" SelectedItem="{Binding SelectedSolderMaskColor}" Width="100"/>
+                </StackPanel>
+                <StackPanel Margin="5">
+                    <TextBlock Text="Silk Screen"/>
+                    <ComboBox ItemsSource="{Binding SilkScreenColors}" SelectedItem="{Binding SelectedSilkScreenColor}" Width="100"/>
+                </StackPanel>
+                <StackPanel Margin="5">
+                    <TextBlock Text="Trace Color"/>
+                    <ComboBox ItemsSource="{Binding TraceColors}" SelectedItem="{Binding SelectedTraceColor}" Width="100"/>
+                </StackPanel>
+                <StackPanel Margin="5">
+                    <TextBlock Text="Copper Color"/>
+                    <ComboBox ItemsSource="{Binding CopperColors}" SelectedItem="{Binding SelectedCopperColor}" Width="100"/>
+                </StackPanel>
+                <StackPanel Margin="5">
+                    <TextBlock Text="DPI"/>
+                    <ComboBox ItemsSource="{Binding DpiOptions}" SelectedItem="{Binding SelectedDpi}" Width="80"/>
+                </StackPanel>
+            </WrapPanel>
+            
+            <StackPanel Orientation="Horizontal" Spacing="20" HorizontalAlignment="Center">
+                <CheckBox Content="XRay Mode" IsChecked="{Binding XRay}"/>
+                <CheckBox Content="PCB Mode" IsChecked="{Binding PCB}"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+
+</Window>

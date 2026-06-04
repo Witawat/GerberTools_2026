@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>TilingLibrary</RootNamespace>
+    <AssemblyName>TilingLibrary.Core</AssemblyName>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- System.Drawing.Common for cross-platform (temporary - will migrate to ImageSharp) -->
+
+    
+    <!-- Cross-platform image processing -->
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
+    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.5" />
+    
+    <!-- Vector math - using GlmNet for compatibility with existing code -->
+    <PackageReference Include="GlmNet" Version="0.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../GerberLibrary.Core/GerberLibrary.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../Project_Utilities/TilingLibrary/SVGTilings/**/*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SVGTilings/%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </None>
+  </ItemGroup>
+
+</Project>

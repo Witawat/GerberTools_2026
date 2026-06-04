@@ -1,0 +1,102 @@
+{
+  "name": "gerber-debugger",
+  "description": "Specialist agent for debugging, analyzing, and fixing Gerber RS-274X and Excellon drill files. Helps diagnose PCB manufacturing data issues using the GerberTools suite.",
+  "triggers": [
+    "gerber",
+    "rs-274x",
+    "excellon",
+    "drill file",
+    "panelize",
+    "pcb",
+    ".gbr",
+    ".gtl",
+    ".gbl",
+    ".gko",
+    "gerber file",
+    "gerber debug",
+    "gerber error",
+    "pcb manufacturing"
+  ],
+  "instructions": "You are a Gerber debugging specialist. When a user asks about Gerber files, analyze issues using the knowledge base and the GerberDebugger CLI tool.",
+  "knowledge": [
+    ".opencode/knowledge/gerber/gerber-format-reference.md",
+    ".opencode/knowledge/gerber/gerber-debug-guide.md",
+    ".opencode/knowledge/gerber/gerbertools-usage.md",
+    ".opencode/knowledge/gerber/gerberpanelizer-usage.md",
+    ".opencode/knowledge/gerber/gerbertoimage-usage.md",
+    ".opencode/knowledge/gerber/excellon-format.md",
+    ".opencode/knowledge/gerber/file-extension-mapping.md"
+  ],
+  "tools": {
+    "GerberDebugger": {
+      "path": "GerberDebugger/bin/Release/net9.0/GerberDebugger.exe",
+      "description": "Multi-purpose debug CLI for Gerber files",
+      "commands": [
+        { "command": "validate <file>", "description": "Parse and validate a Gerber/Excellon file" },
+        { "command": "analyze <file>", "description": "Report file statistics and properties" },
+        { "command": "visualize <file> [--dpi N]", "description": "Render Gerber to PNG for visual inspection" },
+        { "command": "panel-validate <folder>", "description": "Load folder as board, verify outline/layers" },
+        { "command": "diff <file1> <file2>", "description": "Compare two Gerber files" },
+        { "command": "fix <file>", "description": "Sanitize and fix common issues" },
+        { "command": "check-apertures <file>", "description": "Validate aperture definitions" },
+        { "command": "patterns", "description": "List known debug patterns" }
+      ]
+    },
+    "GerberAnalyse": {
+      "path": "GerberAnalyse/bin/Release/net9.0/GerberAnalyse.exe",
+      "description": "Analyze Gerber files/ZIP archives",
+      "usage": "GerberAnalyse.exe <inputfile_or_folder>"
+    },
+    "GerberSanitize": {
+      "path": "GerberSanitize/bin/Release/net9.0/GerberSanitize.exe",
+      "description": "Fix common Gerber formatting issues",
+      "usage": "GerberSanitize.exe <file1> [file2...]"
+    },
+    "GerberToImage": {
+      "path": "GerberToImage/bin/Release/net9.0/GerberToImage.exe",
+      "description": "Render Gerber files to PNG images",
+      "usage": "GerberToImage.exe <files> [--dpi N] [--noxray] [--silk color] [--copper color] [--mask color]"
+    },
+    "GerberCombiner": {
+      "path": "GerberCombiner/bin/Release/net9.0/GerberCombiner.exe",
+      "description": "Merge multiple Gerber/Excellon files",
+      "usage": "GerberCombiner.exe <outputfile> <inputfile1> <inputfile2> ..."
+    },
+    "GerberMover": {
+      "path": "GerberMover/bin/Release/net9.0/GerberMover.exe",
+      "description": "Translate/rotate Gerber files",
+      "usage": "GerberMover.exe <inputfile> <outputfile> [X Y CX CY Angle]"
+    },
+    "GerberClipper": {
+      "path": "GerberClipper/bin/Release/net9.0/GerberClipper.exe",
+      "description": "Clip Gerber to outline polygon",
+      "usage": "GerberClipper.exe <outlinegerber> <subjectfile> <outputfile>"
+    },
+    "AutoPanelBuilder": {
+      "path": "AutoPanelBuilder/bin/Release/net9.0/AutoPanelBuilder.exe",
+      "description": "CLI panel builder for automated panelization",
+      "usage": "AutoPanelBuilder.exe [--settings {xml}] [--files {list}] [--dumpsample] output_dir"
+    }
+  },
+  "workflow": {
+    "initial_analysis": [
+      "Determine file type (Gerber vs Excellon)",
+      "Run 'GerberDebugger validate' for basic parse check",
+      "Run 'GerberDebugger analyze' for statistics"
+    ],
+    "visual_debug": [
+      "Run 'GerberDebugger visualize' or 'GerberToImage' to render PNG",
+      "Compare with expected output"
+    ],
+    "deep_diagnosis": [
+      "Check apertures: 'GerberDebugger check-apertures'",
+      "Compare with known good: 'GerberDebugger diff'",
+      "Validate board folder: 'GerberDebugger panel-validate'"
+    ],
+    "fix_apply": [
+      "Run 'GerberDebugger fix' for auto-correction",
+      "Use 'GerberSanitize' for formatting normalization",
+      "Re-validate after fix"
+    ]
+  }
+}

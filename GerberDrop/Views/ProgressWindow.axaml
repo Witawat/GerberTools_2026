@@ -1,0 +1,24 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:GerberDrop.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
+        x:Class="GerberDrop.Views.ProgressWindow"
+        x:DataType="vm:ProgressWindowViewModel"
+        Title="Processing..."
+        Width="400" Height="300"
+        WindowStartupLocation="CenterOwner">
+    
+    <Grid RowDefinitions="Auto,Auto,*">
+        <TextBlock Grid.Row="0" Text="{Binding StatusText}" Margin="10" FontWeight="Bold"/>
+        <ProgressBar Grid.Row="1" Margin="10" Height="20" 
+                     Value="{Binding ProgressValue}" 
+                     IsIndeterminate="{Binding IsIndeterminate}"
+                     Maximum="100"/>
+        
+        <TextBox Grid.Row="2" Margin="10" Text="{Binding LogText}" 
+                 AcceptsReturn="True" IsReadOnly="True" 
+                 TextWrapping="Wrap" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+    </Grid>
+</Window>
