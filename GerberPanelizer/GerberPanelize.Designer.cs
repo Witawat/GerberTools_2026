@@ -475,7 +475,6 @@
             this.Controls.Add(this.vScrollBar1);
             this.Controls.Add(this.glControl1);
             this.Controls.Add(this.statusStrip1);
-            this.Controls.Add(this.menuStrip1);
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "GerberPanelize";
             this.ShowIcon = false;
@@ -486,8 +485,6 @@
             this.Load += new System.EventHandler(this.GerberPanelize_Load);
             this.SizeChanged += new System.EventHandler(this.Form1_SizeChanged);
             this.Resize += new System.EventHandler(this.GerberPanelize_Resize);
-            this.menuStrip1.ResumeLayout(false);
-            this.menuStrip1.PerformLayout();
             this.contextMenuStrip1.ResumeLayout(false);
             this.contextMenuStrip2.ResumeLayout(false);
             this.statusStrip1.ResumeLayout(false);

@@ -81,7 +81,6 @@ namespace GerberCombinerBuilder
             ParentFrame = Host;
             Gerber.ArcQualityScaleFactor = 20;
             InitializeComponent();
-            menuStrip1.AllowMerge = false;
             glControl1.MouseWheel += glControl1_MouseWheel;
             RotateLeftHover.Visible = false;
             RotateRightHover.Visible = false;
@@ -586,16 +585,19 @@ namespace GerberCombinerBuilder
 
                 foreach(var inst in ThePanel.TheSet.Instances)
                 {
-                    if (selectionBounds.Contains(inst.Center)) 
+                    if (inst.BoundingBox.Valid && selectionBounds.Intersects(inst.BoundingBox))
                     {
                         if (!SelectedInstances.Contains(inst)) SelectedInstances.Add(inst);
                     }
                 }
-                 foreach(var tab in ThePanel.TheSet.Tabs)
+                foreach(var tab in ThePanel.TheSet.Tabs)
                 {
-                    if (selectionBounds.Contains(tab.Center)) 
+                    Bounds tabBounds = new Bounds();
+                    tabBounds.FitPoint(tab.Center.X - tab.Radius, tab.Center.Y - tab.Radius);
+                    tabBounds.FitPoint(tab.Center.X + tab.Radius, tab.Center.Y + tab.Radius);
+                    if (selectionBounds.Intersects(tabBounds))
                     {
-                         if (!SelectedInstances.Contains(tab)) SelectedInstances.Add(tab);
+                        if (!SelectedInstances.Contains(tab)) SelectedInstances.Add(tab);
                     }
                 }
                 
@@ -1315,7 +1317,7 @@ namespace GerberCombinerBuilder
             StartZoomAnimation(glControl1.Width / 2, glControl1.Height / 2);
         }
 
-        private void Zoom1to1()
+        public void Zoom1to1()
         {
             using (Graphics g = Graphics.FromHwnd(IntPtr.Zero))
             {

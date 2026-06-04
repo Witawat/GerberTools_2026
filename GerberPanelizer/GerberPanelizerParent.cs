@@ -160,8 +160,7 @@ namespace GerberCombinerBuilder
 
             ToolStripMenuItem boardMenu = new ToolStripMenuItem("&Board Placement");
             ToolStripMenuItem addGerberItem = new ToolStripMenuItem("Add Gerber Folder", null, (s, e) => ActivePanelizeInstance?.addGerberFolderToolStripMenuItem1_Click(s, e));
-            ToolStripMenuItem naivePackItem = new ToolStripMenuItem("Autopack: Naive", null, (s, e) => ActivePanelizeInstance?.ThePanel?.RectanglePack());
-            naivePackItem.Click += (s, e) => { if (ActivePanelizeInstance != null) { ActivePanelizeInstance.ThePanel.RectanglePack(); ActivePanelizeInstance.Redraw(true); } };
+            ToolStripMenuItem naivePackItem = new ToolStripMenuItem("Autopack: Naive", null, (s, e) => { if (ActivePanelizeInstance != null) { ActivePanelizeInstance.ThePanel.RectanglePack(); ActivePanelizeInstance.Redraw(true); } });
             ToolStripMenuItem maxRectsItem = new ToolStripMenuItem("Autopack: MaxRects", null, (s, e) => { if (ActivePanelizeInstance != null) { ActivePanelizeInstance.ThePanel.MaxRectPack(allowrotation: true); ActivePanelizeInstance.Redraw(true); } });
             ToolStripMenuItem autofitItem = new ToolStripMenuItem("Autofit Canvas", null, (s, e) => { if (ActivePanelizeInstance != null) new AutofitDialog(ActivePanelizeInstance).ShowDialog(this); });
             boardMenu.DropDownItems.Add(addGerberItem);
@@ -191,7 +190,7 @@ namespace GerberCombinerBuilder
 
             ToolStripMenuItem viewMenu = new ToolStripMenuItem("&View");
             ToolStripMenuItem zoomFitItem = new ToolStripMenuItem("Zoom to fit", null, (s, e) => { if (ActivePanelizeInstance != null) { ActivePanelizeInstance.ZoomToFit(); ActivePanelizeInstance.Redraw(false); } });
-            ToolStripMenuItem scale11Item = new ToolStripMenuItem("Scale 1:1", null, (s, e) => { if (ActivePanelizeInstance != null) ActivePanelizeInstance.Redraw(false); });
+            ToolStripMenuItem scale11Item = new ToolStripMenuItem("Scale 1:1", null, (s, e) => { if (ActivePanelizeInstance != null) { ActivePanelizeInstance.Zoom1to1(); ActivePanelizeInstance.Redraw(false); } });
             ToolStripMenuItem zoomInItem = new ToolStripMenuItem("Zoom In", null, (s, e) => ActivePanelizeInstance?.ZoomIn());
             ToolStripMenuItem zoomOutItem = new ToolStripMenuItem("Zoom Out", null, (s, e) => ActivePanelizeInstance?.ZoomOut());
             ToolStripMenuItem showGridItem = new ToolStripMenuItem("Show Grid", null, (s, e) => {
