@@ -1620,8 +1620,6 @@ namespace GerberCombinerBuilder
                     }
                     maxY -= minY;
                 }
-                ThePanel.TheSet.Width = Math.Max(maxX, ThePanel.TheSet.Width);
-                ThePanel.TheSet.Height = Math.Max(maxY, ThePanel.TheSet.Height);
                 UpdateScrollers();
                 Redraw(true);
             }

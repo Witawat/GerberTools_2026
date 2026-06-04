@@ -135,26 +135,86 @@ REM =============================================
 REM  Build single project
 REM =============================================
 :single
+cls
 echo.
-echo  Available projects (folder name):
-echo  QuickGerberRender CaseBuilder EagleBoardToCHeader FrontPanelBuilder
-echo  JLCDrop VScorePanel ProductionFrame PnP_Processor SolderTool
-echo  TINRS-ArtWorkGenerator IconBuilder OpampCalculator FitBitmapToOutlineAndMerge
-echo  GerberAnalyse GerberClipper GerberCombiner GerberMover
-echo  GerberSanitize GerberSubtract AutoPanelBuilder AntennaBuilder
-echo  BOMConsolidator ProtoBoardGenerator LightPipeBuilder ImageToGerber
-echo  MakeIcon IconScanner ReleaseBuilder
-echo  SickOfBeige BoardStats BoardRender DXFStats Base64Extractor LocaleTest
-echo  EagleLoadTest FrameCreatorTest
+echo  ========================================
+echo    Build Single Project
+echo  ========================================
 echo.
-set /p SINGLE="  Enter project folder: "
-if "%SINGLE%"=="" goto menu
-call :findproj "%SINGLE%"
-if "%PROJPATH%"=="" (
-    echo  Not found: %SINGLE%
-    timeout /t 2 >nul
-    goto single
-)
+echo  --- GUI Applications ---
+echo    [01] GerberPanelizer          [02] GerberViewer
+echo    [03] QuickGerberRender        [04] FitBitmapToOutlineAndMerge
+echo    [05] CaseBuilder              [06] EagleBoardToCHeader
+echo    [07] FrontPanelBuilder        [08] JLCDrop
+echo    [09] VScorePanel              [10] ProductionFrame
+echo    [11] PnP_Processor            [12] SolderTool
+echo    [13] TINRS-ArtWorkGenerator   [14] IconBuilder
+echo    [15] OpampCalculator
+echo.
+echo  --- CLI Tools ---
+echo    [16] GerberAnalyse            [17] GerberClipper
+echo    [18] GerberCombiner           [19] GerberMover
+echo    [20] GerberSanitize           [21] GerberSubtract
+echo    [22] AutoPanelBuilder         [23] AntennaBuilder
+echo    [24] BOMConsolidator          [25] ProtoBoardGenerator
+echo    [26] LightPipeBuilder         [27] ImageToGerber
+echo    [28] MakeIcon                 [29] IconScanner
+echo    [30] ReleaseBuilder           [31] SickOfBeige
+echo    [32] BoardStats               [33] BoardRender
+echo    [34] DXFStats                 [35] Base64Extractor
+echo    [36] LocaleTest               [37] EagleLoadTest
+echo    [38] FrameCreatorTest
+echo.
+echo    [0] Back to main menu
+echo  ========================================
+echo.
+set /p PICK="  Enter number [0-38]: "
+
+if "%PICK%"=="0" goto menu
+if "%PICK%"=="1"  set PROJPATH=GerberPanelizer\GerberPanelize.csproj& goto dosingle
+if "%PICK%"=="2"  set PROJPATH=GerberViewer\GerberViewer.csproj& goto dosingle
+if "%PICK%"=="3"  set PROJPATH=QuickGerberRender\QuickGerberRender.csproj& goto dosingle
+if "%PICK%"=="4"  set PROJPATH=FitBitmapToOutlineAndMerge\FitBitmapToOutlineAndMerge.csproj& goto dosingle
+if "%PICK%"=="5"  set PROJPATH=CaseBuilder\CaseBuilder.csproj& goto dosingle
+if "%PICK%"=="6"  set PROJPATH=EagleBoardToCHeader\EagleBoardToCHeader.csproj& goto dosingle
+if "%PICK%"=="7"  set PROJPATH=FrontPanelBuilder\FrontPanelBuilder.csproj& goto dosingle
+if "%PICK%"=="8"  set PROJPATH=JLCDrop\JLCDrop.csproj& goto dosingle
+if "%PICK%"=="9"  set PROJPATH=VScorePanel\FrameDrop.csproj& goto dosingle
+if "%PICK%"=="10" set PROJPATH=ProductionFrame\ProductionFrame.csproj& goto dosingle
+if "%PICK%"=="11" set PROJPATH=PnP_Processor\PnP_Processor.csproj& goto dosingle
+if "%PICK%"=="12" set PROJPATH=SolderTool\SolderTool.csproj& goto dosingle
+if "%PICK%"=="13" set PROJPATH=TINRS-ArtWorkGenerator\TINRS-ArtWorkGenerator.csproj& goto dosingle
+if "%PICK%"=="14" set PROJPATH=Project_Utilities\IconBuilder\IconBuilder.csproj& goto dosingle
+if "%PICK%"=="15" set PROJPATH=GerberProjects\OpampCalculator\OpampCalculator.csproj& goto dosingle
+if "%PICK%"=="16" set PROJPATH=GerberAnalyse\GerberAnalyse.csproj& goto dosingle
+if "%PICK%"=="17" set PROJPATH=GerberClipper\GerberClipper.csproj& goto dosingle
+if "%PICK%"=="18" set PROJPATH=GerberCombiner\GerberCombiner.csproj& goto dosingle
+if "%PICK%"=="19" set PROJPATH=GerberMover\GerberMover.csproj& goto dosingle
+if "%PICK%"=="20" set PROJPATH=GerberSanitize\GerberSanitize.csproj& goto dosingle
+if "%PICK%"=="21" set PROJPATH=GerberSubtract\GerberSubtract.csproj& goto dosingle
+if "%PICK%"=="22" set PROJPATH=AutoPanelBuilder\AutoPanelBuilder.csproj& goto dosingle
+if "%PICK%"=="23" set PROJPATH=AntennaBuilder\NFCAntennaBuilder.csproj& goto dosingle
+if "%PICK%"=="24" set PROJPATH=BOMConsolidator\BOMConsolidator.csproj& goto dosingle
+if "%PICK%"=="25" set PROJPATH=ProtoBoardGenerator\ProtoBoardGenerator.csproj& goto dosingle
+if "%PICK%"=="26" set PROJPATH=LightPipeBuilder\LightPipeBuilder.csproj& goto dosingle
+if "%PICK%"=="27" set PROJPATH=ImageToGerber\FrontPanelImageToGerber.csproj& goto dosingle
+if "%PICK%"=="28" set PROJPATH=MakeIcon\MakeIcon.csproj& goto dosingle
+if "%PICK%"=="29" set PROJPATH=Project_Utilities\IconScanner\IconScanner.csproj& goto dosingle
+if "%PICK%"=="30" set PROJPATH=Project_Utilities\ReleaseBuilder\ReleaseBuilder.csproj& goto dosingle
+if "%PICK%"=="31" set PROJPATH=DirtyPCBs\SickOfBeige\DirtyPCB_SickOfBeige.csproj& goto dosingle
+if "%PICK%"=="32" set PROJPATH=DirtyPCBs\DirtyPCB_BoardStats\DirtyPCB_BoardStats.csproj& goto dosingle
+if "%PICK%"=="33" set PROJPATH=DirtyPCBs\DirtyPCB_BoardRender\DirtyPCB_BoardRender.csproj& goto dosingle
+if "%PICK%"=="34" set PROJPATH=DirtyPCBs\DirtyPCB_DXFStats\DirtyPCB_DXFStats.csproj& goto dosingle
+if "%PICK%"=="35" set PROJPATH=DirtyPCBs\Base64Extractor\DirtyPCB_Base64Extractor.csproj& goto dosingle
+if "%PICK%"=="36" set PROJPATH=DirtyPCBs\DirtyLocaleTest\DirtyPCB_LocaleTest.csproj& goto dosingle
+if "%PICK%"=="37" set PROJPATH=GerberProjects\EagleLoadTest\EagleLoadTest.csproj& goto dosingle
+if "%PICK%"=="38" set PROJPATH=GerberProjects\FrameCreatorTest\FrameCreatorTest.csproj& goto dosingle
+echo  Invalid choice.
+timeout /t 1 >nul
+goto single
+
+:dosingle
+echo.
 echo  Building: %PROJPATH%
 "%DOTNET%" build "%ROOT%%PROJPATH%" -c Debug --nologo
 echo.
@@ -179,49 +239,6 @@ REM =============================================
 :copycli
 if not exist "%ROOT%%~1\bin\%CONFIG%\%~2\" exit /b 0
 xcopy "%ROOT%%~1\bin\%CONFIG%\%~2\*" "%CLI_OUT%\" /Y /Q >nul 2>&1
-exit /b 0
-
-REM =============================================
-REM  Find project for single build
-REM =============================================
-:findproj
-if /I "%~1"=="QuickGerberRender"           set PROJPATH=QuickGerberRender\QuickGerberRender.csproj& exit /b 0
-if /I "%~1"=="CaseBuilder"                set PROJPATH=CaseBuilder\CaseBuilder.csproj& exit /b 0
-if /I "%~1"=="EagleBoardToCHeader"        set PROJPATH=EagleBoardToCHeader\EagleBoardToCHeader.csproj& exit /b 0
-if /I "%~1"=="FrontPanelBuilder"          set PROJPATH=FrontPanelBuilder\FrontPanelBuilder.csproj& exit /b 0
-if /I "%~1"=="JLCDrop"                   set PROJPATH=JLCDrop\JLCDrop.csproj& exit /b 0
-if /I "%~1"=="VScorePanel"               set PROJPATH=VScorePanel\FrameDrop.csproj& exit /b 0
-if /I "%~1"=="ProductionFrame"           set PROJPATH=ProductionFrame\ProductionFrame.csproj& exit /b 0
-if /I "%~1"=="PnP_Processor"            set PROJPATH=PnP_Processor\PnP_Processor.csproj& exit /b 0
-if /I "%~1"=="SolderTool"               set PROJPATH=SolderTool\SolderTool.csproj& exit /b 0
-if /I "%~1"=="TINRS-ArtWorkGenerator"    set PROJPATH=TINRS-ArtWorkGenerator\TINRS-ArtWorkGenerator.csproj& exit /b 0
-if /I "%~1"=="IconBuilder"              set PROJPATH=Project_Utilities\IconBuilder\IconBuilder.csproj& exit /b 0
-if /I "%~1"=="OpampCalculator"          set PROJPATH=GerberProjects\OpampCalculator\OpampCalculator.csproj& exit /b 0
-if /I "%~1"=="FitBitmapToOutlineAndMerge" set PROJPATH=FitBitmapToOutlineAndMerge\FitBitmapToOutlineAndMerge.csproj& exit /b 0
-if /I "%~1"=="GerberAnalyse"            set PROJPATH=GerberAnalyse\GerberAnalyse.csproj& exit /b 0
-if /I "%~1"=="GerberClipper"            set PROJPATH=GerberClipper\GerberClipper.csproj& exit /b 0
-if /I "%~1"=="GerberCombiner"           set PROJPATH=GerberCombiner\GerberCombiner.csproj& exit /b 0
-if /I "%~1"=="GerberMover"             set PROJPATH=GerberMover\GerberMover.csproj& exit /b 0
-if /I "%~1"=="GerberSanitize"           set PROJPATH=GerberSanitize\GerberSanitize.csproj& exit /b 0
-if /I "%~1"=="GerberSubtract"           set PROJPATH=GerberSubtract\GerberSubtract.csproj& exit /b 0
-if /I "%~1"=="AutoPanelBuilder"         set PROJPATH=AutoPanelBuilder\AutoPanelBuilder.csproj& exit /b 0
-if /I "%~1"=="AntennaBuilder"          set PROJPATH=AntennaBuilder\NFCAntennaBuilder.csproj& exit /b 0
-if /I "%~1"=="BOMConsolidator"         set PROJPATH=BOMConsolidator\BOMConsolidator.csproj& exit /b 0
-if /I "%~1"=="ProtoBoardGenerator"      set PROJPATH=ProtoBoardGenerator\ProtoBoardGenerator.csproj& exit /b 0
-if /I "%~1"=="LightPipeBuilder"         set PROJPATH=LightPipeBuilder\LightPipeBuilder.csproj& exit /b 0
-if /I "%~1"=="ImageToGerber"           set PROJPATH=ImageToGerber\FrontPanelImageToGerber.csproj& exit /b 0
-if /I "%~1"=="MakeIcon"               set PROJPATH=MakeIcon\MakeIcon.csproj& exit /b 0
-if /I "%~1"=="IconScanner"            set PROJPATH=Project_Utilities\IconScanner\IconScanner.csproj& exit /b 0
-if /I "%~1"=="ReleaseBuilder"          set PROJPATH=Project_Utilities\ReleaseBuilder\ReleaseBuilder.csproj& exit /b 0
-if /I "%~1"=="SickOfBeige"            set PROJPATH=DirtyPCBs\SickOfBeige\DirtyPCB_SickOfBeige.csproj& exit /b 0
-if /I "%~1"=="BoardStats"             set PROJPATH=DirtyPCBs\DirtyPCB_BoardStats\DirtyPCB_BoardStats.csproj& exit /b 0
-if /I "%~1"=="BoardRender"            set PROJPATH=DirtyPCBs\DirtyPCB_BoardRender\DirtyPCB_BoardRender.csproj& exit /b 0
-if /I "%~1"=="DXFStats"              set PROJPATH=DirtyPCBs\DirtyPCB_DXFStats\DirtyPCB_DXFStats.csproj& exit /b 0
-if /I "%~1"=="Base64Extractor"        set PROJPATH=DirtyPCBs\Base64Extractor\DirtyPCB_Base64Extractor.csproj& exit /b 0
-if /I "%~1"=="LocaleTest"            set PROJPATH=DirtyPCBs\DirtyLocaleTest\DirtyPCB_LocaleTest.csproj& exit /b 0
-if /I "%~1"=="EagleLoadTest"          set PROJPATH=GerberProjects\EagleLoadTest\EagleLoadTest.csproj& exit /b 0
-if /I "%~1"=="FrameCreatorTest"       set PROJPATH=GerberProjects\FrameCreatorTest\FrameCreatorTest.csproj& exit /b 0
-set PROJPATH=
 exit /b 0
 
 :help
