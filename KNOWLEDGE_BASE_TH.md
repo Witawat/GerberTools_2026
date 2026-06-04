@@ -2,7 +2,7 @@
 
 ## ภาพรวม
 
-**GerberTools** คือชุดเครื่องมือและไลบรารีมากกว่า 37+ รายการ สำหรับการประมวลผลไฟล์ผลิต PCB (แผงวงจรพิมพ์), การจัดเรียงแผง (panelization), การเรนเดอร์ภาพ, และระบบอัตโนมัติในกระบวนการผลิต โปรเจกต์นี้มี 2 ยุค:
+**GerberTools** คือชุดเครื่องมือและไลบรารี 49 รายการ สำหรับการประมวลผลไฟล์ผลิต PCB (แผงวงจรพิมพ์), การจัดเรียงแผง (panelization), การเรนเดอร์ภาพ, และระบบอัตโนมัติในกระบวนการผลิต ทั้ง 38 โปรเจกต์ `.csproj` แบบดั้งเดิมได้ถูกย้ายเป็นรูปแบบ SDK-style แล้ว ทำให้ใช้ `dotnet build` ได้โดยไม่ต้องใช้ Visual Studio โปรเจกต์นี้มี 2 ยุค:
 
 | ยุค | .NET | UI | ไลบรารี |
 |-----|------|----|---------|
@@ -236,10 +236,13 @@
 - **หน้าที่:** ตัวสร้างไฟล์ทดสอบสังเคราะห์ (`GerberTools.TestGenerator`) สร้างบอร์ดมาตรฐาน 100×100mm พร้อม outline, copper บน/ล่าง, silk, และไฟล์ drill เป็น Gerber X2/Excellon ASCII สำหรับทดสอบเครื่องมืออื่น
 
 ### Build Scripts
-- `build_all.bat` — บิวด์ GerberLibrary, QuickGerberRender, GerberPanelizer, GerberViewer → `Build/Output/`
-- `build.sh` — สำหรับ Linux/Mono
+- `build_all.ps1` — สคริปต์ PowerShell สำหรับบิวด์ทั้งหมด ~46 โปรเจกต์ (ข้าม net9.0 หากไม่มี SDK), คัดลอก GUI ไปที่ `Build/Output/<ชื่อ>/` และ CLI ไปที่ `CommandLine/` วิธีใช้: `.\build_all.ps1` หรือ `.\build_all.ps1 -Config Release`
+- `build_all.bat` — สคริปต์ batch รุ่นเก่า (เลิกใช้แล้ว; ใช้ build_all.ps1 แทน)
+- `build.sh` — สำหรับ Linux
 - `build_QuickRender.bat` — บิวด์เฉพาะ QuickRender
 - `BuildRelease.bat` — บิวด์ release เต็มรูปแบบ
+
+ทุกโปรเจกต์ใช้รูปแบบ SDK-style csproj — สามารถบิวด์ด้วย `dotnet build <โปรเจกต์>.csproj` โดยไม่ต้องใช้ Visual Studio
 
 ### ButtonsAndIcons (`ButtonsAndIcons/`)
 - **ประเภท:** โฟลเดอร์ทรัพยากร (ไม่ใช่โปรเจกต์)

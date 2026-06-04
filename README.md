@@ -1,124 +1,134 @@
 # GerberTools
 
-This repository contains a suite of C# tools for loading, editing, creating, panelizing, and pre-rendering sets of Gerber files. These tools are designed to facilitate PCB production workflows, particularly for panelization and format conversion.
+A suite of 49 C# tools and libraries for loading, editing, creating, panelizing, and rendering Gerber PCB files. All projects use SDK-style `.csproj` format — buildable with `dotnet build` without Visual Studio.
 
-## Main Applications
+## Quick Start
 
-### GerberPanelizer
-**Purpose:** The primary GUI application for creating PCB panels. It allows you to import multiple board designs, arrange them (manually or automatically), add break-tabs (mousebites), and export the merged Gerber files.
+```powershell
+# Build all projects
+.\build_all.ps1
 
-**Usage:** Launch `GerberPanelizer.exe`. No command line arguments are required.
-
-### AutoPanelBuilder
-**Purpose:** A command-line version of the panelizer for automated workflows.
-
-**Usage:**
-```
-AutoPanelBuilder.exe [--settings {file}] [--files {filewithfolders}] [--dumpsample] output_directory
+# Output goes to:
+#   Build\Output\<AppName>\      (GUI applications)
+#   Build\Output\CommandLine\    (CLI tools)
 ```
 
-### GerberViewer
-**Purpose:** A simple GUI application for viewing Gerber files.
+## Main GUI Applications
 
-**Usage:**
-```
-GerberViewer.exe [file1] [file2] ...
-```
+| Application | Description |
+|------------|-------------|
+| **GerberPanelizer** | Flagship visual PCB panelizer with OpenGL canvas. Arrange boards, add break-tabs, export merged Gerbers. |
+| **GerberViewer** | OpenGL-accelerated Gerber layer viewer with dockable interface. |
+| **QuickGerberRender** | Drag-and-drop Gerber → PNG renderer with customizable colors and DPI. |
+| **GerberDrop** | Cross-platform Avalonia version of QuickGerberRender. |
+| **JLCDrop** | Drag-and-drop JLCPCB fabrication packager (BOM + PnP + Gerber ZIP). |
+| **VScorePanel (FrameDrop)** | PCB panelizer with two modes: Tabby (break-tabs) and Groovy (V-score). |
+| **PnP_Processor** | Pick-and-Place assembly processor with dockable BOM viewer. |
+| **SolderTool** | Hand-soldering assistant — track soldered/unsoldered parts visually. |
+| **CaseBuilder** | Generate laser-cut enclosure DXF from PCB outline ("Sick Of Beige"). |
+| **FrontPanelBuilder** | Generate front panel Gerbers from PCB silkscreen + PNG overlays. |
+| **FitBitmapToOutlineAndMerge** | Merge bitmap artwork onto PCB silkscreen within board outline. |
+| **EagleBoardToCHeader** | Convert Eagle `.brd` to C/C++ header with component placements. |
+| **ProductionFrame** | GUI for production panel/frame Gerbers with fiducials. |
+| **TINRS-ArtWorkGenerator** | Generate geometric tiling artwork from bitmap masks (legacy WinForms). |
+| **TiNRS-Tiler** | Modern Avalonia version of TINRS-ArtWorkGenerator with MVVM. |
+| **IconBuilder** | Interactive icon designer using geometric tiling artwork. |
+| **OpampCalculator** | Op-amp calculator utility. |
 
-## Command Line Utilities
+## Command Line Tools
 
-### File Conversion
+### Gerber Processing
+| Tool | Description |
+|------|-------------|
+| **GerberAnalyse** | Report board dimensions, drill counts, bounding box. |
+| **GerberClipper** | Clip Gerber to board outline polygon. |
+| **GerberCombiner** | Merge multiple Gerber or Excellon files into one. |
+| **GerberDebugger** | Multi-command diagnostic utility (validate, analyze, visualize, diff, fix). |
+| **GerberMover** | Translate, rotate, and transform Gerber/Excellon files. |
+| **GerberSanitize** | Clean/normalize Gerber line formatting. |
+| **GerberSplitter** | Split Gerber set using polygon outline templates. |
+| **GerberSubtract** | Subtract overlapping aperture flashes (experimental). |
 
-#### GerberToImage
-**Purpose:** Renders Gerber files to high-resolution PNG images.
+### Format Conversion
+| Tool | Description |
+|------|-------------|
+| **GerberToDxf** | Convert Gerber to DXF mechanical CAD format. |
+| **GerberToImage** | Render Gerber layers to high-quality PNG images. |
+| **GerberToOutline** | Convert Gerber to SVG outline preview. |
+| **ImageToGerber** | Convert PNG bitmaps to Gerber files for front panels. |
 
-**Usage:**
-```
-GerberToImage <files> [--dpi N] [--noxray] [--nopcb] [--silk color] [--trace color] [--copper color] [--mask color]
-```
+### PCB Generators
+| Tool | Description |
+|------|-------------|
+| **AntennaBuilder** | Generate complete Gerber + drill files for NFC antenna PCBs. |
+| **ProtoBoardGenerator** | Generate custom protoboard/perfboard Gerbers (grid + flower styles). |
+| **LightPipeBuilder** | KiCad PCB → OpenSCAD 3D-printable light pipe models. |
+| **AutoPanelBuilder** | Automated batch PCB panelization with break-tab insertion. |
 
-#### GerberToDxf
-**Purpose:** Converts Gerber files to DXF format (AutoCAD).
+### DirtyPCBs Suite
+| Tool | Description |
+|------|-------------|
+| **SickOfBeige** | CLI enclosure/case DXF generator from Gerbers. |
+| **BoardStats** | Extract PCB dimensions + drill count as JSON. |
+| **BoardRender** | Render PCB preview images with customizable colors. |
+| **DXFStats** | Extract trace length + bounding box from DXF files. |
+| **Base64Extractor** | Decode Base64 email attachments to ZIP. |
+| **LocaleTest** | Debug locale-related Gerber coordinate parsing. |
 
-**Usage:**
-```
-GerberToDxf <infile> <outfile>
-```
+### Utilities
+| Tool | Description |
+|------|-------------|
+| **BOMConsolidator** | Consolidate JLCPCB-format BOM files. |
+| **MakeIcon** | Generate multi-resolution `.ico` files using tiling artwork. |
+| **IconScanner** | Batch icon generator from directory/label lists. |
+| **ReleaseBuilder** | Collect build outputs into timestamped ZIP archives. |
+| **TestGenerator** | Generate synthetic Gerber test files for validation. |
+| **MigrationTest** | Smoke test for GerberLibrary → GerberLibrary.Core migration. |
 
-#### GerberToOutline
-**Purpose:** Extracts the outline from a Gerber file and exports it (typically to SVG).
+## Core Libraries
 
-**Usage:**
-```
-GerberToOutline.exe <infile> <outfile>
-```
-
-### File Manipulation
-
-#### GerberCombiner
-**Purpose:** Combines multiple Gerber or Excellon files into a single file.
-
-**Usage:**
-```
-GerberCombiner <outputfile> <inputfile1> <inputfile2> ...
-```
-
-#### GerberMover
-**Purpose:** Applies translation (move) and rotation to a Gerber file.
-
-**Usage:**
-```
-GerberMover <inputfile> <outputfile> <X> <Y> <CX> <CY> <Angle>
-```
-
-#### GerberClipper
-**Purpose:** Clips a subject Gerber file using a polygon defined in an outline Gerber file.
-
-**Usage:**
-```
-GerberClipper.exe <outlinegerber> <subject> <outputfile>
-```
-
-#### GerberSubtract
-**Purpose:** Subtracts one Gerber layer from another. **Experimental.**
-
-**Usage:**
-```
-GerberSubtract <sourcefile> <subtractfile> <outputfile>
-```
-
-#### GerberSplitter
-**Purpose:** Splits a Gerber file into slices based on a "slice file".
-
-**Usage:**
-```
-GerberSplitter <slicefile> <gerberfile1> <gerberfile2> ...
-```
-
-#### GerberSanitize
-**Purpose:** Reads Gerber files and writes out a "sanitized" version, fixing common formatting issues.
-
-**Usage:**
-```
-GerberSanitize <file1> <file2> ...
-```
-
-### Analysis & Verification
-
-#### GerberAnalyse
-**Purpose:** Analyzes Gerber files or Zip archives to report board dimensions, drill counts, and layer types.
-
-**Usage:**
-```
-GerberAnalyse <inputfile_or_folder>
-```
+| Library | Framework | Description |
+|---------|-----------|-------------|
+| **GerberLibrary** | .NET 4.8 | Original Gerber/PCB processing (parsing, rendering, panel packing). |
+| **GerberLibrary.Core** | .NET 9.0 | Modern cross-platform replacement (ImageSharp, SharpZipLib). |
+| **EagleLoaders** | .NET 4.8 | Eagle `.brd`/`.lbr` parser and renderer. |
+| **TilingLibrary.Core** | .NET 9.0 | Mathematical tiling engine for geometric artwork generation. |
 
 ## Building
-**Visual Studio:** Open `GerberProjects/GerberProjects.sln` and build.
 
-**Dependencies:** Ensure NuGet packages are restored.
+```powershell
+# Build everything (Debug)
+.\build_all.ps1
 
-**Linux/Mono:** The tools are standard C# and generally compatible with Mono. Run `./build.sh`. Dependencies should be automatically fetched.
+# Build everything (Release)
+.\build_all.ps1 -Config Release
+
+# Build a single project
+dotnet build <Project>\<Project>.csproj
+```
+
+**Requirements:**
+- .NET SDK 8.0+ (for net48 projects)
+- .NET SDK 9.0+ (for net9.0 cross-platform projects — optional)
+- No Visual Studio required — all projects use SDK-style `.csproj`
+
+**Output:**
+- `Build\Output\<AppName>\` — GUI applications with all dependencies
+- `Build\Output\CommandLine\` — CLI tools
+
+## Architecture
+
+The solution spans two generations:
+- **Legacy:** .NET Framework 4.8, Windows Forms + OpenTK, `GerberLibrary`
+- **Modern:** .NET 9.0 cross-platform, Avalonia UI (MVVM), `GerberLibrary.Core`
+
+A migration from legacy WinForms to modern Avalonia is in progress (tracked in `ProjectProgress/`).
+
+## Documentation
+
+- [KNOWLEDGE_BASE.md](KNOWLEDGE_BASE.md) — Complete project reference (English)
+- [KNOWLEDGE_BASE_TH.md](KNOWLEDGE_BASE_TH.md) — Complete project reference (Thai)
 
 ## License
-See the LICENSE file for details.
+
+See the [LICENSE](LICENSE) file for details.

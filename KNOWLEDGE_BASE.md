@@ -2,7 +2,7 @@
 
 ## Overview
 
-**GerberTools** is a suite of 37+ tools and libraries for PCB (Printed Circuit Board) fabrication file processing, panelization, rendering, and manufacturing automation. The solution spans two generations:
+**GerberTools** is a suite of 49 tools and libraries for PCB (Printed Circuit Board) fabrication file processing, panelization, rendering, and manufacturing automation. All 38 legacy `.csproj` projects have been migrated to SDK-style format, enabling `dotnet build` without Visual Studio. The solution spans two generations:
 
 | Generation | Target | UI | Libraries |
 |-----------|--------|----|-----------|
@@ -244,10 +244,13 @@ A collection of 6 CLI tools for the DirtyPCBs fabrication service:
 - **Purpose:** Synthetic test file generator (`GerberTools.TestGenerator`). Produces a standard 100×100mm board with outline, top/bottom copper, silk, and drill files as raw Gerber X2/Excellon ASCII for testing other tools.
 
 ### Build Scripts
-- `build_all.bat` — Builds GerberLibrary, QuickGerberRender, GerberPanelizer, GerberViewer → `Build/Output/`
-- `build.sh` — Linux/Mono equivalent
+- `build_all.ps1` — PowerShell build script. Builds all ~46 projects (skips net9.0 if SDK not available), copies GUI apps to `Build/Output/<AppName>/` and CLI tools to `Build/Output/CommandLine/`. Usage: `.\build_all.ps1` or `.\build_all.ps1 -Config Release`
+- `build_all.bat` — Legacy batch build (deprecated; use build_all.ps1)
+- `build.sh` — Linux shell build script
 - `build_QuickRender.bat` — Quick render-only build
 - `BuildRelease.bat` — Full release build
+
+All projects use SDK-style csproj format — buildable with `dotnet build <project>.csproj` without Visual Studio.
 
 ### ButtonsAndIcons (`ButtonsAndIcons/`)
 - **Type:** Resource folder (not a project)
