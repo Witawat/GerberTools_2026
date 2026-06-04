@@ -1,178 +1,394 @@
 @echo off
 setlocal enabledelayedexpansion
+title GerberTools Build
 
 set DOTNET=dotnet
 set ROOT=%~dp0
-
-if /I "%1"=="release" ( set CONFIG=Release ) else if /I "%1"=="r" ( set CONFIG=Release ) else if /I "%1"=="--help" ( goto help ) else if /I "%1"=="-h" ( goto help ) else ( set CONFIG=Debug )
-
-echo ========================================
-echo   GerberTools Build Script [%CONFIG%]
-echo ========================================
-
-REM Check .NET SDK version for net9.0 support
-for /f "tokens=1" %%v in ('dotnet --version 2^>nul') do set SDKVER=%%v
-set HAS_NET9=0
-for /f "tokens=1 delims=." %%a in ("%SDKVER%") do (
-    if %%a geq 9 set HAS_NET9=1
-)
-if %HAS_NET9%==0 (
-    echo .NET SDK %SDKVER% detected - net9.0 projects will be SKIPPED
-    echo Install .NET 9 SDK for full build
-)
-echo.
-
 set OUT=%ROOT%Build\Output
 set CLI_OUT=%OUT%\CommandLine
 
-REM Clean previous output
-if exist "%OUT%" rmdir /s /q "%OUT%"
-mkdir "%OUT%" 2>nul
-mkdir "%CLI_OUT%" 2>nul
+REM Check .NET SDK
+for /f "tokens=1" %%v in ('dotnet --version 2^>nul') do set SDKVER=%%v
+set HAS_NET9=0
+for /f "tokens=1 delims=." %%a in ("%SDKVER%") do if %%a geq 9 set HAS_NET9=1
 
-REM ==========================================
-echo [%CONFIG%] Building Core Libraries...
-call :buildproj GerberLibrary\GerberLibrary.csproj
-call :buildproj EagleLoaders\EagleLoaders.csproj
-call :buildproj Project_Utilities\TilingLibrary\TINRS-ArtWork.csproj
-call :buildproj GerberPanelizer\QuickFont\QuickFont.csproj
-if %HAS_NET9%==1 (
-    call :buildproj GerberLibrary.Core\GerberLibrary.Core.csproj
-    call :buildproj TilingLibrary.Core\TilingLibrary.Core.csproj
+if "%1"=="--help" goto help
+if "%1"=="-h" goto help
+
+REM =============================================
+REM  Interactive menu
+REM =============================================
+:menu
+cls
+echo.
+echo  ========================================
+echo    GerberTools Build Script
+echo  ========================================
+echo    .NET SDK: %SDKVER%
+if %HAS_NET9%==0 echo    (net9.0 projects will be skipped)
+echo.
+echo    [1] Build ALL (Debug)
+echo    [2] Build ALL (Release)
+echo    [3] Build Libraries only (Debug)
+echo    [4] Build GUI Apps only (Debug)
+echo    [5] Build CLI Tools only (Debug)
+echo    [6] Build single project
+echo    [Q] Quit
+echo  ========================================
+echo.
+set /p CHOICE="  Enter choice [1-6/Q]: "
+
+if /I "%CHOICE%"=="Q" goto end
+if "%CHOICE%"=="1" (set CONFIG=Debug& set MODE=all& goto prepare)
+if "%CHOICE%"=="2" (set CONFIG=Release& set MODE=all& goto prepare)
+if "%CHOICE%"=="3" (set CONFIG=Debug& set MODE=lib& goto prepare)
+if "%CHOICE%"=="4" (set CONFIG=Debug& set MODE=gui& goto prepare)
+if "%CHOICE%"=="5" (set CONFIG=Debug& set MODE=cli& goto prepare)
+if "%CHOICE%"=="6" (set CONFIG=Debug& set MODE=single& goto prepare)
+echo  Invalid choice. Try again.
+timeout /t 1 >nul
+goto menu
+
+REM =============================================
+REM  Prepare output folders
+REM =============================================
+:prepare
+echo.
+if %MODE%==all (
+    if exist "%OUT%" rmdir /s /q "%OUT%"
+    mkdir "%OUT%" 2>nul
+    mkdir "%CLI_OUT%" 2>nul
 )
-echo   Core Libraries   [OK]
-
-REM ==========================================
-echo [%CONFIG%] Building GUI Applications...
-call :buildproj QuickGerberRender\QuickGerberRender.csproj                     & call :copyout QuickGerberRender        QuickGerberRender           net48
-call :buildproj GerberPanelizer\GerberPanelize.csproj                          & call :copyout GerberPanelizer          GerberPanelizer             net48
-call :buildproj GerberViewer\GerberViewer.csproj                               & call :copyout GerberViewer             GerberViewer                net48
-call :buildproj FitBitmapToOutlineAndMerge\FitBitmapToOutlineAndMerge.csproj   & call :copyout FitBitmapToOutlineAndMerge FitBitmapToOutlineAndMerge net48
-call :buildproj CaseBuilder\CaseBuilder.csproj                                 & call :copyout CaseBuilder              CaseBuilder                 net48
-call :buildproj EagleBoardToCHeader\EagleBoardToCHeader.csproj                 & call :copyout EagleBoardToCHeader      EagleBoardToCHeader         net48
-call :buildproj FrontPanelBuilder\FrontPanelBuilder.csproj                    & call :copyout FrontPanelBuilder        FrontPanelBuilder           net48
-call :buildproj JLCDrop\JLCDrop.csproj                                         & call :copyout JLCDrop                  JLCDrop                     net48
-call :buildproj VScorePanel\FrameDrop.csproj                                   & call :copyout VScorePanel              FrameDrop                   net48
-call :buildproj ProductionFrame\ProductionFrame.csproj                         & call :copyout ProductionFrame          ProductionFrame             net48
-call :buildproj PnP_Processor\PnP_Processor.csproj                             & call :copyout PnP_Processor            PnP_Processor               net48
-call :buildproj SolderTool\SolderTool.csproj                                   & call :copyout SolderTool               SolderTool                  net48
-call :buildproj TINRS-ArtWorkGenerator\TINRS-ArtWorkGenerator.csproj           & call :copyout TINRS-ArtWorkGenerator   TINRS-ArtWorkGenerator      net48
-call :buildproj Project_Utilities\IconBuilder\IconBuilder.csproj               & call :copyout IconBuilder              IconBuilder                 net48
-call :buildproj GerberProjects\OpampCalculator\OpampCalculator.csproj          & call :copyout OpampCalculator          OpampCalculator             net48
-if %HAS_NET9%==1 (
-    call :buildproj GerberDrop\GerberDrop.csproj                               & call :copyout GerberDrop               GerberDrop                  net9.0
-    call :buildproj TiNRS-Tiler\TiNRS.Tiler.csproj                             & call :copyout TiNRS-Tiler              TiNRS.Tiler                 net9.0
-) else (
-    echo   SKIPPED: GerberDrop (net9.0)
-    echo   SKIPPED: TiNRS-Tiler (net9.0)
+if %MODE%==gui (
+    if exist "%OUT%" (
+        for /d %%d in ("%OUT%\*") do (
+            if /I not "%%~nxd"=="CommandLine" rmdir /s /q "%%d"
+        )
+    )
+    mkdir "%OUT%" 2>nul
 )
-echo   GUI Applications [OK]
-
-REM ==========================================
-echo [%CONFIG%] Building CLI Tools...
-call :buildproj GerberAnalyse\GerberAnalyse.csproj                     & call :copycli GerberAnalyse            net48
-call :buildproj GerberClipper\GerberClipper.csproj                     & call :copycli GerberClipper             net48
-call :buildproj GerberCombiner\GerberCombiner.csproj                   & call :copycli GerberCombiner            net48
-call :buildproj GerberMover\GerberMover.csproj                         & call :copycli GerberMover               net48
-call :buildproj GerberSanitize\GerberSanitize.csproj                   & call :copycli GerberSanitize             net48
-call :buildproj GerberSubtract\GerberSubtract.csproj                   & call :copycli GerberSubtract             net48
-call :buildproj AutoPanelBuilder\AutoPanelBuilder.csproj               & call :copycli AutoPanelBuilder          net48
-call :buildproj AntennaBuilder\NFCAntennaBuilder.csproj                & call :copycli AntennaBuilder            net48
-call :buildproj BOMConsolidator\BOMConsolidator.csproj                 & call :copycli BOMConsolidator           net48
-call :buildproj ProtoBoardGenerator\ProtoBoardGenerator.csproj         & call :copycli ProtoBoardGenerator       net48
-call :buildproj LightPipeBuilder\LightPipeBuilder.csproj               & call :copycli LightPipeBuilder           net48
-call :buildproj ImageToGerber\FrontPanelImageToGerber.csproj           & call :copycli ImageToGerber             net48
-call :buildproj MakeIcon\MakeIcon.csproj                               & call :copycli MakeIcon                  net48
-call :buildproj Project_Utilities\IconScanner\IconScanner.csproj       & call :copycli IconScanner               net48
-call :buildproj Project_Utilities\ReleaseBuilder\ReleaseBuilder.csproj & call :copycli ReleaseBuilder            net48
-call :buildproj DirtyPCBs\SickOfBeige\DirtyPCB_SickOfBeige.csproj      & call :copycli SickOfBeige               net48
-call :buildproj DirtyPCBs\DirtyPCB_BoardStats\DirtyPCB_BoardStats.csproj   & call :copycli BoardStats            net48
-call :buildproj DirtyPCBs\DirtyPCB_BoardRender\DirtyPCB_BoardRender.csproj & call :copycli BoardRender           net48
-call :buildproj DirtyPCBs\DirtyPCB_DXFStats\DirtyPCB_DXFStats.csproj       & call :copycli DXFStats              net48
-call :buildproj DirtyPCBs\Base64Extractor\DirtyPCB_Base64Extractor.csproj  & call :copycli Base64Extractor       net48
-call :buildproj DirtyPCBs\DirtyLocaleTest\DirtyPCB_LocaleTest.csproj       & call :copycli LocaleTest            net48
-call :buildproj GerberProjects\EagleLoadTest\EagleLoadTest.csproj          & call :copycli EagleLoadTest         net48
-call :buildproj GerberProjects\FrameCreatorTest\FrameCreatorTest.csproj    & call :copycli FrameCreatorTest      net48
-if %HAS_NET9%==1 (
-    call :buildproj GerberDebugger\GerberDebugger.csproj               & call :copycli GerberDebugger            net9.0
-    call :buildproj GerberSplitter\GerberSplitter.csproj               & call :copycli GerberSplitter             net9.0
-    call :buildproj GerberToDxf\GerberToDxf\GerberToDxf.csproj         & call :copycli GerberToDxf               net9.0
-    call :buildproj GerberToImage\GerberToImage.csproj                 & call :copycli GerberToImage             net9.0
-    call :buildproj GerberToOutline\GerberToOutline.csproj             & call :copycli GerberToOutline           net9.0
-    call :buildproj Tests\GerberTools.TestGenerator\GerberTools.TestGenerator.csproj & call :copycli TestGenerator   net9.0
-    call :buildproj MigrationTest\MigrationTest.csproj                 & call :copycli MigrationTest             net9.0
-) else (
-    echo   SKIPPED: net9.0 CLI tools ^(GerberDebugger, GerberSplitter, GerberToDxf, GerberToImage, GerberToOutline, TestGenerator, MigrationTest^)
+if %MODE%==cli (
+    if exist "%CLI_OUT%" rmdir /s /q "%CLI_OUT%"
+    mkdir "%CLI_OUT%" 2>nul
 )
-echo   CLI Tools        [OK]
+if %MODE%==single (
+    mkdir "%OUT%" 2>nul
+)
 
-REM ==========================================
-echo ========================================
-echo   All builds complete!
-echo ========================================
-echo.
-echo Output: %OUT%
-echo.
-echo --- GUI Applications ---
-dir /b /ad "%OUT%" 2>nul | findstr /V "CommandLine"
-echo.
-echo --- CLI Tools (%CLI_OUT%) ---
-dir /b "%CLI_OUT%" 2>nul | findstr "."
-echo.
-goto end
+REM =============================================
+REM  Build: Core Libraries
+REM =============================================
+if %MODE%==all goto build_all
+if %MODE%==lib  goto build_lib
+if %MODE%==gui  goto build_gui
+if %MODE%==cli  goto build_cli
+if %MODE%==single goto build_single
+goto menu
 
-REM ==========================================
-REM  Helper: Build a project
-REM ==========================================
-:buildproj
-echo   Building: %~1
-"%DOTNET%" build "%ROOT%%~1" -c %CONFIG% --nologo -v q >nul 2>&1
-if not %ERRORLEVEL%==0 (
-    echo   FAILED: %~1
-    "%DOTNET%" build "%ROOT%%~1" -c %CONFIG% --nologo 2>&1 | findstr /C:"error"
-    exit /b %ERRORLEVEL%
+REM =============================================
+REM  BUILD ALL
+REM =============================================
+:build_all
+call :section Libraries
+call :build_all_libs
+call :section "GUI Applications"
+call :build_all_gui
+call :section "CLI Tools"
+call :build_all_cli
+call :summary
+goto ask_again
+
+REM =============================================
+REM  BUILD LIBS ONLY
+REM =============================================
+:build_lib
+call :section Libraries
+call :build_all_libs
+call :summary
+goto ask_again
+
+REM =============================================
+REM  BUILD GUI ONLY
+REM =============================================
+:build_gui
+call :section "GUI Applications"
+call :build_all_libs
+call :build_all_gui
+call :summary
+goto ask_again
+
+REM =============================================
+REM  BUILD CLI ONLY
+REM =============================================
+:build_cli
+call :section "CLI Tools"
+call :build_all_libs
+call :build_all_cli
+call :summary
+goto ask_again
+
+REM =============================================
+REM  BUILD SINGLE
+REM =============================================
+:build_single
+echo.
+echo  Available projects:
+echo.
+echo  --- GUI ---
+echo   QuickGerberRender           GerberPanelizer             GerberViewer
+echo   FitBitmapToOutlineAndMerge  CaseBuilder                 EagleBoardToCHeader
+echo   FrontPanelBuilder           JLCDrop                     ProductionFrame
+echo   VScorePanel                 PnP_Processor               SolderTool
+echo   TINRS-ArtWorkGenerator      IconBuilder                 OpampCalculator
+echo.
+echo  --- CLI ---
+echo   GerberAnalyse     GerberClipper      GerberCombiner
+echo   GerberMover       GerberSanitize     GerberSubtract
+echo   AutoPanelBuilder  AntennaBuilder     BOMConsolidator
+echo   ProtoBoardGenerator LightPipeBuilder ImageToGerber
+echo   MakeIcon          IconScanner        ReleaseBuilder
+echo   SickOfBeige       BoardStats         BoardRender       DXFStats
+echo   Base64Extractor   LocaleTest         EagleLoadTest     FrameCreatorTest
+echo.
+echo  Format: FolderName (no extension, no path)
+echo.
+set /p SINGLE="  Enter project folder name: "
+if "%SINGLE%"=="" goto menu
+
+REM Map friendly names to csproj paths
+call :findproj "%SINGLE%"
+if "%PROJPATH%"=="" (
+    echo  Project not found: %SINGLE%
+    timeout /t 2 >nul
+    goto build_single
+)
+set CONFIG=Debug
+call :build_all_libs
+echo.
+echo  ========== Building: %SINGLE% ==========
+set BUILDFAIL=0
+call :doproj "%PROJPATH%"
+if %BUILDFAIL%==1 goto fail
+echo  Build: %SINGLE% [OK]
+goto ask_again
+
+REM =============================================
+REM  Build all libraries
+REM =============================================
+:build_all_libs
+set BUILDFAIL=0
+call :doproj "GerberLibrary\GerberLibrary.csproj"
+if %BUILDFAIL%==1 exit /b 1
+call :doproj "EagleLoaders\EagleLoaders.csproj"
+if %BUILDFAIL%==1 exit /b 1
+call :doproj "Project_Utilities\TilingLibrary\TINRS-ArtWork.csproj"
+if %BUILDFAIL%==1 exit /b 1
+call :doproj "GerberPanelizer\QuickFont\QuickFont.csproj"
+if %BUILDFAIL%==1 exit /b 1
+if %HAS_NET9%==1 (
+    call :doproj "GerberLibrary.Core\GerberLibrary.Core.csproj"
+    call :doproj "TilingLibrary.Core\TilingLibrary.Core.csproj"
 )
 exit /b 0
 
-REM ==========================================
+REM =============================================
+REM  Build all GUI apps
+REM =============================================
+:build_all_gui
+call :doproj "QuickGerberRender\QuickGerberRender.csproj"                     & if %BUILDFAIL%==0 call :copyout QuickGerberRender        QuickGerberRender           net48
+call :doproj "GerberPanelizer\GerberPanelize.csproj"                          & if %BUILDFAIL%==0 call :copyout GerberPanelizer          GerberPanelizer             net48
+call :doproj "GerberViewer\GerberViewer.csproj"                               & if %BUILDFAIL%==0 call :copyout GerberViewer             GerberViewer                net48
+call :doproj "FitBitmapToOutlineAndMerge\FitBitmapToOutlineAndMerge.csproj"   & if %BUILDFAIL%==0 call :copyout FitBitmapToOutlineAndMerge FitBitmapToOutlineAndMerge net48
+call :doproj "CaseBuilder\CaseBuilder.csproj"                                 & if %BUILDFAIL%==0 call :copyout CaseBuilder              CaseBuilder                 net48
+call :doproj "EagleBoardToCHeader\EagleBoardToCHeader.csproj"                 & if %BUILDFAIL%==0 call :copyout EagleBoardToCHeader      EagleBoardToCHeader         net48
+call :doproj "FrontPanelBuilder\FrontPanelBuilder.csproj"                     & if %BUILDFAIL%==0 call :copyout FrontPanelBuilder        FrontPanelBuilder           net48
+call :doproj "JLCDrop\JLCDrop.csproj"                                         & if %BUILDFAIL%==0 call :copyout JLCDrop                  JLCDrop                     net48
+call :doproj "VScorePanel\FrameDrop.csproj"                                   & if %BUILDFAIL%==0 call :copyout VScorePanel              FrameDrop                   net48
+call :doproj "ProductionFrame\ProductionFrame.csproj"                         & if %BUILDFAIL%==0 call :copyout ProductionFrame          ProductionFrame             net48
+call :doproj "PnP_Processor\PnP_Processor.csproj"                             & if %BUILDFAIL%==0 call :copyout PnP_Processor            PnP_Processor               net48
+call :doproj "SolderTool\SolderTool.csproj"                                   & if %BUILDFAIL%==0 call :copyout SolderTool               SolderTool                  net48
+call :doproj "TINRS-ArtWorkGenerator\TINRS-ArtWorkGenerator.csproj"           & if %BUILDFAIL%==0 call :copyout TINRS-ArtWorkGenerator   TINRS-ArtWorkGenerator      net48
+call :doproj "Project_Utilities\IconBuilder\IconBuilder.csproj"               & if %BUILDFAIL%==0 call :copyout IconBuilder              IconBuilder                 net48
+call :doproj "GerberProjects\OpampCalculator\OpampCalculator.csproj"          & if %BUILDFAIL%==0 call :copyout OpampCalculator          OpampCalculator             net48
+if %HAS_NET9%==1 (
+    call :doproj "GerberDrop\GerberDrop.csproj"                               & if %BUILDFAIL%==0 call :copyout GerberDrop               GerberDrop                  net9.0
+    call :doproj "TiNRS-Tiler\TiNRS.Tiler.csproj"                             & if %BUILDFAIL%==0 call :copyout TiNRS-Tiler              TiNRS.Tiler                 net9.0
+) else (
+    echo   SKIPPED: GerberDrop, TiNRS-Tiler (net9.0)
+)
+exit /b 0
+
+REM =============================================
+REM  Build all CLI tools
+REM =============================================
+:build_all_cli
+call :doproj "GerberAnalyse\GerberAnalyse.csproj"                     & if %BUILDFAIL%==0 call :copycli GerberAnalyse            net48
+call :doproj "GerberClipper\GerberClipper.csproj"                     & if %BUILDFAIL%==0 call :copycli GerberClipper             net48
+call :doproj "GerberCombiner\GerberCombiner.csproj"                   & if %BUILDFAIL%==0 call :copycli GerberCombiner            net48
+call :doproj "GerberMover\GerberMover.csproj"                         & if %BUILDFAIL%==0 call :copycli GerberMover               net48
+call :doproj "GerberSanitize\GerberSanitize.csproj"                   & if %BUILDFAIL%==0 call :copycli GerberSanitize             net48
+call :doproj "GerberSubtract\GerberSubtract.csproj"                   & if %BUILDFAIL%==0 call :copycli GerberSubtract             net48
+call :doproj "AutoPanelBuilder\AutoPanelBuilder.csproj"               & if %BUILDFAIL%==0 call :copycli AutoPanelBuilder          net48
+call :doproj "AntennaBuilder\NFCAntennaBuilder.csproj"                & if %BUILDFAIL%==0 call :copycli AntennaBuilder            net48
+call :doproj "BOMConsolidator\BOMConsolidator.csproj"                 & if %BUILDFAIL%==0 call :copycli BOMConsolidator           net48
+call :doproj "ProtoBoardGenerator\ProtoBoardGenerator.csproj"         & if %BUILDFAIL%==0 call :copycli ProtoBoardGenerator       net48
+call :doproj "LightPipeBuilder\LightPipeBuilder.csproj"               & if %BUILDFAIL%==0 call :copycli LightPipeBuilder           net48
+call :doproj "ImageToGerber\FrontPanelImageToGerber.csproj"           & if %BUILDFAIL%==0 call :copycli ImageToGerber             net48
+call :doproj "MakeIcon\MakeIcon.csproj"                               & if %BUILDFAIL%==0 call :copycli MakeIcon                  net48
+call :doproj "Project_Utilities\IconScanner\IconScanner.csproj"       & if %BUILDFAIL%==0 call :copycli IconScanner               net48
+call :doproj "Project_Utilities\ReleaseBuilder\ReleaseBuilder.csproj" & if %BUILDFAIL%==0 call :copycli ReleaseBuilder            net48
+call :doproj "DirtyPCBs\SickOfBeige\DirtyPCB_SickOfBeige.csproj"      & if %BUILDFAIL%==0 call :copycli SickOfBeige               net48
+call :doproj "DirtyPCBs\DirtyPCB_BoardStats\DirtyPCB_BoardStats.csproj"   & if %BUILDFAIL%==0 call :copycli BoardStats            net48
+call :doproj "DirtyPCBs\DirtyPCB_BoardRender\DirtyPCB_BoardRender.csproj" & if %BUILDFAIL%==0 call :copycli BoardRender           net48
+call :doproj "DirtyPCBs\DirtyPCB_DXFStats\DirtyPCB_DXFStats.csproj"       & if %BUILDFAIL%==0 call :copycli DXFStats              net48
+call :doproj "DirtyPCBs\Base64Extractor\DirtyPCB_Base64Extractor.csproj"  & if %BUILDFAIL%==0 call :copycli Base64Extractor       net48
+call :doproj "DirtyPCBs\DirtyLocaleTest\DirtyPCB_LocaleTest.csproj"       & if %BUILDFAIL%==0 call :copycli LocaleTest            net48
+call :doproj "GerberProjects\EagleLoadTest\EagleLoadTest.csproj"          & if %BUILDFAIL%==0 call :copycli EagleLoadTest         net48
+call :doproj "GerberProjects\FrameCreatorTest\FrameCreatorTest.csproj"    & if %BUILDFAIL%==0 call :copycli FrameCreatorTest      net48
+if %HAS_NET9%==1 (
+    call :doproj "GerberDebugger\GerberDebugger.csproj"               & if %BUILDFAIL%==0 call :copycli GerberDebugger            net9.0
+    call :doproj "GerberSplitter\GerberSplitter.csproj"               & if %BUILDFAIL%==0 call :copycli GerberSplitter             net9.0
+    call :doproj "GerberToDxf\GerberToDxf\GerberToDxf.csproj"         & if %BUILDFAIL%==0 call :copycli GerberToDxf               net9.0
+    call :doproj "GerberToImage\GerberToImage.csproj"                 & if %BUILDFAIL%==0 call :copycli GerberToImage             net9.0
+    call :doproj "GerberToOutline\GerberToOutline.csproj"             & if %BUILDFAIL%==0 call :copycli GerberToOutline           net9.0
+    call :doproj "Tests\GerberTools.TestGenerator\GerberTools.TestGenerator.csproj" & if %BUILDFAIL%==0 call :copycli TestGenerator net9.0
+    call :doproj "MigrationTest\MigrationTest.csproj"                 & if %BUILDFAIL%==0 call :copycli MigrationTest             net9.0
+) else (
+    echo   SKIPPED: 7 net9.0 CLI tools
+)
+exit /b 0
+
+REM =============================================
+REM  Helper: Section header
+REM =============================================
+:section
+echo.
+echo  ========== %~1 ==========
+exit /b 0
+
+REM =============================================
+REM  Helper: Build a project (shows folder name, real-time output)
+REM =============================================
+:doproj
+echo  [%CONFIG%] %~1
+"%DOTNET%" build "%ROOT%%~1" -c %CONFIG% --nologo -v minimal 2>&1 | findstr /V "warning CS"
+if %ERRORLEVEL%==0 set BUILDFAIL=0
+if not %ERRORLEVEL%==0 (
+    set BUILDFAIL=1
+    echo  FAILED: %~1
+)
+exit /b 0
+
+REM =============================================
 REM  Helper: Copy GUI app output
-REM  %1 = source folder, %2 = dest name, %3 = framework (net48/net9.0)
-REM ==========================================
+REM =============================================
 :copyout
 set SRCDIR=%ROOT%%~1\bin\%CONFIG%\%~3\
 set DSTDIR=%OUT%\%~2\
 if exist "%DSTDIR%" rmdir /s /q "%DSTDIR%"
 mkdir "%DSTDIR%" 2>nul
 xcopy "%SRCDIR%*" "%DSTDIR%" /Y /Q /E >nul 2>&1
-echo     -> %OUT:|=:%\%~2
+echo    -> %OUT%%~2
 exit /b 0
 
-REM ==========================================
+REM =============================================
 REM  Helper: Copy CLI tool output
-REM  %1 = source folder, %2 = framework (net48/net9.0)
-REM ==========================================
+REM =============================================
 :copycli
 set SRCDIR=%ROOT%%~1\bin\%CONFIG%\%~2\
 xcopy "%SRCDIR%*" "%CLI_OUT%\" /Y /Q >nul 2>&1
-echo     -> %OUT:|=:%\CommandLine\
+echo    -> %CLI_OUT%
 exit /b 0
 
+REM =============================================
+REM  Helper: Find project path for single build
+REM =============================================
+:findproj
+if /I "%~1"=="QuickGerberRender"           set PROJPATH=QuickGerberRender\QuickGerberRender.csproj& exit /b 0
+if /I "%~1"=="GerberPanelizer"             set PROJPATH=GerberPanelizer\GerberPanelize.csproj& exit /b 0
+if /I "%~1"=="GerberViewer"                set PROJPATH=GerberViewer\GerberViewer.csproj& exit /b 0
+if /I "%~1"=="FitBitmapToOutlineAndMerge"   set PROJPATH=FitBitmapToOutlineAndMerge\FitBitmapToOutlineAndMerge.csproj& exit /b 0
+if /I "%~1"=="CaseBuilder"                set PROJPATH=CaseBuilder\CaseBuilder.csproj& exit /b 0
+if /I "%~1"=="EagleBoardToCHeader"        set PROJPATH=EagleBoardToCHeader\EagleBoardToCHeader.csproj& exit /b 0
+if /I "%~1"=="FrontPanelBuilder"          set PROJPATH=FrontPanelBuilder\FrontPanelBuilder.csproj& exit /b 0
+if /I "%~1"=="JLCDrop"                   set PROJPATH=JLCDrop\JLCDrop.csproj& exit /b 0
+if /I "%~1"=="VScorePanel"               set PROJPATH=VScorePanel\FrameDrop.csproj& exit /b 0
+if /I "%~1"=="ProductionFrame"           set PROJPATH=ProductionFrame\ProductionFrame.csproj& exit /b 0
+if /I "%~1"=="PnP_Processor"            set PROJPATH=PnP_Processor\PnP_Processor.csproj& exit /b 0
+if /I "%~1"=="SolderTool"               set PROJPATH=SolderTool\SolderTool.csproj& exit /b 0
+if /I "%~1"=="TINRS-ArtWorkGenerator"    set PROJPATH=TINRS-ArtWorkGenerator\TINRS-ArtWorkGenerator.csproj& exit /b 0
+if /I "%~1"=="IconBuilder"              set PROJPATH=Project_Utilities\IconBuilder\IconBuilder.csproj& exit /b 0
+if /I "%~1"=="OpampCalculator"          set PROJPATH=GerberProjects\OpampCalculator\OpampCalculator.csproj& exit /b 0
+REM --- CLI ---
+if /I "%~1"=="GerberAnalyse"            set PROJPATH=GerberAnalyse\GerberAnalyse.csproj& exit /b 0
+if /I "%~1"=="GerberClipper"            set PROJPATH=GerberClipper\GerberClipper.csproj& exit /b 0
+if /I "%~1"=="GerberCombiner"           set PROJPATH=GerberCombiner\GerberCombiner.csproj& exit /b 0
+if /I "%~1"=="GerberMover"             set PROJPATH=GerberMover\GerberMover.csproj& exit /b 0
+if /I "%~1"=="GerberSanitize"           set PROJPATH=GerberSanitize\GerberSanitize.csproj& exit /b 0
+if /I "%~1"=="GerberSubtract"           set PROJPATH=GerberSubtract\GerberSubtract.csproj& exit /b 0
+if /I "%~1"=="AutoPanelBuilder"         set PROJPATH=AutoPanelBuilder\AutoPanelBuilder.csproj& exit /b 0
+if /I "%~1"=="AntennaBuilder"          set PROJPATH=AntennaBuilder\NFCAntennaBuilder.csproj& exit /b 0
+if /I "%~1"=="BOMConsolidator"         set PROJPATH=BOMConsolidator\BOMConsolidator.csproj& exit /b 0
+if /I "%~1"=="ProtoBoardGenerator"      set PROJPATH=ProtoBoardGenerator\ProtoBoardGenerator.csproj& exit /b 0
+if /I "%~1"=="LightPipeBuilder"         set PROJPATH=LightPipeBuilder\LightPipeBuilder.csproj& exit /b 0
+if /I "%~1"=="ImageToGerber"           set PROJPATH=ImageToGerber\FrontPanelImageToGerber.csproj& exit /b 0
+if /I "%~1"=="MakeIcon"               set PROJPATH=MakeIcon\MakeIcon.csproj& exit /b 0
+if /I "%~1"=="IconScanner"            set PROJPATH=Project_Utilities\IconScanner\IconScanner.csproj& exit /b 0
+if /I "%~1"=="ReleaseBuilder"          set PROJPATH=Project_Utilities\ReleaseBuilder\ReleaseBuilder.csproj& exit /b 0
+if /I "%~1"=="SickOfBeige"            set PROJPATH=DirtyPCBs\SickOfBeige\DirtyPCB_SickOfBeige.csproj& exit /b 0
+if /I "%~1"=="BoardStats"             set PROJPATH=DirtyPCBs\DirtyPCB_BoardStats\DirtyPCB_BoardStats.csproj& exit /b 0
+if /I "%~1"=="BoardRender"            set PROJPATH=DirtyPCBs\DirtyPCB_BoardRender\DirtyPCB_BoardRender.csproj& exit /b 0
+if /I "%~1"=="DXFStats"              set PROJPATH=DirtyPCBs\DirtyPCB_DXFStats\DirtyPCB_DXFStats.csproj& exit /b 0
+if /I "%~1"=="Base64Extractor"        set PROJPATH=DirtyPCBs\Base64Extractor\DirtyPCB_Base64Extractor.csproj& exit /b 0
+if /I "%~1"=="LocaleTest"            set PROJPATH=DirtyPCBs\DirtyLocaleTest\DirtyPCB_LocaleTest.csproj& exit /b 0
+if /I "%~1"=="EagleLoadTest"          set PROJPATH=GerberProjects\EagleLoadTest\EagleLoadTest.csproj& exit /b 0
+if /I "%~1"=="FrameCreatorTest"       set PROJPATH=GerberProjects\FrameCreatorTest\FrameCreatorTest.csproj& exit /b 0
+set PROJPATH=
+exit /b 0
+
+REM =============================================
+REM  Summary
+REM =============================================
+:summary
+echo.
+echo  ========================================
+echo    Build complete  [%CONFIG%]
+echo  ========================================
+echo    Output: %OUT%
+echo.
+if exist "%OUT%" (
+    echo  --- GUI Applications ---
+    for /d %%d in ("%OUT%\*") do if /I not "%%~nxd"=="CommandLine" echo    %%~nxd
+)
+if exist "%CLI_OUT%" (
+    echo.
+    echo  --- CLI Tools in CommandLine\ ---
+)
+echo.
+exit /b 0
+
+REM =============================================
+:ask_again
+echo.
+set /p AGAIN="  Build again? [Y/N]: "
+if /I "%AGAIN%"=="Y" goto menu
+goto end
+
+REM =============================================
 :fail
-echo ========================================
-echo   BUILD FAILED
-echo ========================================
-exit /b %ERRORLEVEL%
+echo.
+echo  ========================================
+echo    BUILD FAILED
+echo  ========================================
+pause
+goto end
 
 :help
-echo Usage: build_all.bat [debug^|release]
+echo  Usage: build_all.bat
 echo.
-echo   (no arg)  Build Debug, copy output to Build\Output\
-echo   debug/d   Build Debug
-echo   release/r Build Release
+echo    Interactive menu - choose Debug/Release, build all or specific projects.
 echo.
-echo Output:
-echo   Build\Output\[AppName]\  -- GUI applications
-echo   Build\Output\CommandLine\ -- CLI tools
+echo    build_all.bat --help   Show this help
 goto end
 
 :end
