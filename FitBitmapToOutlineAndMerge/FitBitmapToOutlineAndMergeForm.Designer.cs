@@ -362,6 +362,7 @@
             this.copperfolderselect.TabIndex = 30;
             this.copperfolderselect.Text = "...";
             this.copperfolderselect.UseVisualStyleBackColor = true;
+            this.copperfolderselect.Click += new System.EventHandler(this.copperfolderselect_Click);
             // 
             // copperfilebox
             // 
@@ -390,6 +391,7 @@
             this.soldermaskselectbutton.TabIndex = 33;
             this.soldermaskselectbutton.Text = "...";
             this.soldermaskselectbutton.UseVisualStyleBackColor = true;
+            this.soldermaskselectbutton.Click += new System.EventHandler(this.soldermaskselectbutton_Click);
             // 
             // soldermaskfilebox
             // 

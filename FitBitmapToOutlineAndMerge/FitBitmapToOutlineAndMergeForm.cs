@@ -20,18 +20,6 @@ namespace FitBitmapToOutlineAndMerge
         public FitBitmapToOutlineAndMergeForm()
         {
             InitializeComponent();
-
-            //ScanFolder(@"C:\Projects\Circuits\eagle\Eurorack-Modular\Eurorack-Modules\Development\Eurorack Set 9\Gerbers\DelayExperiments");
-            try
-            {
-                ScanFolder(@"C:\Projects\Circuits\eagle\Eurorack-Modular\Eurorack-Modules\Development\Eurorack Set 9\Gerbers\RectangularThing-SOICs-TWEAKS-3");
-            }
-            catch(Exception)
-            {
-
-            }
-            //ScanFolder(@"C:\Projects\Circuits\eagle\Eurorack-Modular\Eurorack-Modules\EuroForError\Gerbers\BigBus_Error");
-
         }
 
         private void BitmapButton_Click(object sender, EventArgs e)
@@ -161,26 +149,18 @@ namespace FitBitmapToOutlineAndMerge
             if (B3 != null) GerberLibrary.ArtWork.Functions.WriteBitmapToGerber(OutSoldermask, PLS, DPI, B3, Invert ? -128 : 128);
             if (UseSilkFile)
             {
-                // merge things!
-                GerberLibrary.GerberMerger.Merge(OutSilk, SilkFile, Path.Combine(output, Path.GetFileName(SilkFile )), new StandardConsoleLog());
+                GerberLibrary.GerberMerger.Merge(OutSilk, SilkFile, Path.Combine(output, Path.GetFileName(SilkFile)), new StandardConsoleLog());
             }
             else
             {
-                if (!Directory.Exists(Path.Combine(output, Path.GetFileName(SilkFile))))
+                if (!Directory.Exists(output))
                 {
-                    File.Copy(OutSilk, Path.Combine(output, Path.GetFileName(SilkFile)), true);
+                    Directory.CreateDirectory(output);
                 }
-                else
-                {
-                }
+                File.Copy(OutSilk, Path.Combine(output, Path.GetFileName(OutSilk)), true);
             }
             
 
-        }
-
-        public void AddString(string text, float progress = -1F)
-        {
-            Console.WriteLine(text);
         }
 
         private void OutlineFileBox_TextChanged(object sender, EventArgs e)
@@ -200,17 +180,26 @@ namespace FitBitmapToOutlineAndMerge
 
         private void button8_Click(object sender, EventArgs e)
         {
-            // output folder
+            if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
+            {
+                OutputFolderBox.Text = folderBrowserDialog1.SelectedPath;
+            }
         }
 
         private void button6_Click(object sender, EventArgs e)
         {
-            //BitmapBottom
+            if (BitmapFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                BitmapFileBottomBox.Text = BitmapFileDialog.FileName;
+            }
         }
 
         private void button5_Click(object sender, EventArgs e)
         {
-            // SilkBottom
+            if (GerberFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                SilkFileBottomBox.Text = GerberFileDialog.FileName;
+            }
         }
 
         private void button7_Click(object sender, EventArgs e)
@@ -344,6 +333,22 @@ namespace FitBitmapToOutlineAndMerge
 
         }
 
+        private void copperfolderselect_Click(object sender, EventArgs e)
+        {
+            if (BitmapFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                copperfilebox.Text = BitmapFileDialog.FileName;
+            }
+        }
+
+        private void soldermaskselectbutton_Click(object sender, EventArgs e)
+        {
+            if (BitmapFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                soldermaskfilebox.Text = BitmapFileDialog.FileName;
+            }
+        }
+
         private void InvertBitmapBottom_CheckedChanged(object sender, EventArgs e)
         {
 
@@ -352,7 +357,11 @@ namespace FitBitmapToOutlineAndMerge
         string statustext = "";
         private void timer1_Tick(object sender, EventArgs e)
         {
-
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => timer1_Tick(sender, e)));
+                return;
+            }
             statusbox.Text = statustext;
             if (BGThread == null) Enabled = true;
         }
