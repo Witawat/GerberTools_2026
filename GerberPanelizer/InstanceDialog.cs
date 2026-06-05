@@ -158,6 +158,7 @@ namespace GerberCombinerBuilder
 
             TargetInstance.UpdateHoverControls();
             TargetInstance.Redraw(true);
+            TargetInstance.TV.BuildTree(TargetInstance, TargetInstance.ThePanel.TheSet);
         }
 
         private void ZoomInButton_Click(object sender, EventArgs e)

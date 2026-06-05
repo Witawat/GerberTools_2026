@@ -50,7 +50,6 @@
             this.arrangeIconsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.helpWorkflowToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.panel2 = new System.Windows.Forms.Panel();
             this.panel4 = new System.Windows.Forms.Panel();
@@ -217,8 +216,7 @@
             // helpMenu
             // 
             this.helpMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.aboutToolStripMenuItem,
-            this.helpWorkflowToolStripMenuItem});
+            this.aboutToolStripMenuItem});
             this.helpMenu.Name = "helpMenu";
             this.helpMenu.Size = new System.Drawing.Size(53, 24);
             this.helpMenu.Text = "&Help";
@@ -229,13 +227,6 @@
             this.aboutToolStripMenuItem.Size = new System.Drawing.Size(185, 26);
             this.aboutToolStripMenuItem.Text = "&About ...";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
-            // 
-            // helpWorkflowToolStripMenuItem
-            // 
-            this.helpWorkflowToolStripMenuItem.Name = "helpWorkflowToolStripMenuItem";
-            this.helpWorkflowToolStripMenuItem.Size = new System.Drawing.Size(185, 26);
-            this.helpWorkflowToolStripMenuItem.Text = "Help/Workflow";
-            this.helpWorkflowToolStripMenuItem.Click += new System.EventHandler(this.helpWorkflowToolStripMenuItem_Click);
             // 
             // panel2
             // 
@@ -344,7 +335,6 @@
         private System.Windows.Forms.Panel panel4;
         private System.Windows.Forms.Splitter splitter3;
         private System.Windows.Forms.Panel panel3;
-        private System.Windows.Forms.ToolStripMenuItem helpWorkflowToolStripMenuItem;
     }
 }
 

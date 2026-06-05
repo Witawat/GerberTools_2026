@@ -124,6 +124,12 @@ namespace GerberLibrary
         double LastWidth = -1;
         double LastHeight = -1;
 
+        Pen cachedOrangePen;
+        Pen cachedOutlinePen;
+        Pen cachedBlackPen;
+        SolidBrush cachedDrillBrush;
+        float cachedPW = -1;
+
         public List<string> AddGerberFolder(ProgressLog log, string path, bool add = true, bool skipoutlines = false)
         {
             if (File.Exists(path) && (Path.GetExtension(path).ToLower() == ".zip" || Path.GetExtension(path).ToLower() == "zip"))
@@ -672,7 +678,7 @@ namespace GerberLibrary
                     DrawShapeBG(G, ErrorP, Circle);
                     for (int i = 0; i < BT.Errors.Count; i++)
                     {
-                        G.DrawString(new PointD(BT.Radius + 1, PW * 2 * i), BT.Errors[i], 20.0 / GlobalZoom, false);
+                        G.DrawString(new PointD(BT.Radius + 1, PW * 2 * i), BT.Errors[i], Math.Max(10, 20.0 / GlobalZoom), false);
                     }
                 }
                 else
@@ -726,15 +732,6 @@ namespace GerberLibrary
 
                     foreach (var Shape in a.TheGerber.OutlineShapes)
                     {
-
-                        if (Shape.Hole == false)
-                        {
-                            //FillShape(G, new SolidBrush(Color.FromArgb(100, 255, 255, 255)), Shape);
-                        }
-                        else
-                        {
-                            //             FillShape(G, new SolidBrush(Color.FromArgb(100, 0, 0, 0)), Shape);   
-                        }
                         if (active)
                         {
                             DrawShapeBG(G, ActivePD, Shape);
@@ -770,7 +767,7 @@ namespace GerberLibrary
                     if (Ext.Y * Z > height) Z = height / Ext.Y;
 
 
-                    if (GI.GerberPath.Contains("???_negative") == false)
+                    if (GI.GerberPath.Contains("???_negative") == false && TheSet.ShowBoardLabels)
                         G.DrawString(new PointD(ox, oy), Path.GetFileName(GI.GerberPath), 20.0 / GlobalZoom, true, R, Gf, B, A);
 
 
@@ -880,16 +877,23 @@ namespace GerberLibrary
             }
             Pen OO = new Pen(Color.Orange, PW) { LineJoin = System.Drawing.Drawing2D.LineJoin.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round, StartCap = System.Drawing.Drawing2D.LineCap.Round };
 
-            Pen OO3 = new Pen(Color.FromArgb(140, 40, 40, 30), PW) { LineJoin = System.Drawing.Drawing2D.LineJoin.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round, StartCap = System.Drawing.Drawing2D.LineCap.Round };
-            SolidBrush BR = new SolidBrush(Color.FromArgb(180, 0, 100, 0));
-            //BR.Color.A = 180;
+            if (cachedPW != PW)
+            {
+                cachedOrangePen = new Pen(Color.Orange, PW * 2) { LineJoin = System.Drawing.Drawing2D.LineJoin.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round, StartCap = System.Drawing.Drawing2D.LineCap.Round };
+                cachedOutlinePen = new Pen(Color.FromArgb(140, 40, 40, 30), PW) { LineJoin = System.Drawing.Drawing2D.LineJoin.Round, EndCap = System.Drawing.Drawing2D.LineCap.Round, StartCap = System.Drawing.Drawing2D.LineCap.Round };
+                cachedBlackPen = new Pen(Color.Black, PW);
+                cachedDrillBrush = new SolidBrush(Color.FromArgb(140, 0, 0, 0));
+                cachedPW = PW;
+            }
+            SolidBrush BR = cachedDrillBrush as SolidBrush;
+
             GP.Reset();
 
             foreach (var FinalPoly in FinalPolygonsWithTabs)
             {
                 PolyLine PL2 = new PolyLine(PolyLine.PolyIDs.Temp);
                 PL2.Vertices = FinalPoly.Vertices;
-                DrawShape(G, OO3, PL2);
+                DrawShape(G, cachedOutlinePen, PL2);
                 //  DrawMarker(G, PL2.Vertices.First(), 1, PW);
                 //  DrawMarker(G, PL2.Vertices.Last(), 1, PW);
             }
@@ -903,8 +907,8 @@ namespace GerberLibrary
             {
                 var T = G.Transform.Clone();
                 G.TranslateTransform((float)s.X, (float)s.Y);
-                FillShape(G, new SolidBrush(Color.FromArgb(140, 0, 0, 0)), PL);
-                DrawShape(G, new Pen(Color.Black), PL);
+                FillShape(G, cachedDrillBrush, PL);
+                DrawShape(G, cachedBlackPen, PL);
                 G.Transform = T;
             }
 
@@ -929,8 +933,7 @@ namespace GerberLibrary
         /// <param name="Shape"></param>
         private void FillShape(GraphicsInterface G, SolidBrush BR, PolyLine Shape)
         {
-            // todo: cache the triangulated polygon!
-            //G.FillShape(BR, Shape);
+            G.FillShape(BR, Shape);
         }
         private static void DrawMarkerBG(bool cross, GraphicsInterface G, PointD pointD, float crossize, float PW, Pen P = null)
         {
@@ -2029,15 +2032,12 @@ namespace GerberLibrary
 
             foreach (var b in TheSet.Instances)
             {
-                // Polygons clips = new Polygons();
                 if (GerberOutlines.ContainsKey(b.GerberPath))
                 {
                     var a = GerberOutlines[b.GerberPath];
                     int cc = 0;
                     foreach (var c in b.TransformedOutlines)
                     {
-
-
                         if (Helpers.IsInPolygon(c.Vertices, pt))
                         {
                             cc++;
@@ -2360,6 +2360,7 @@ namespace GerberLibrary
         public bool DoNotGenerateMouseBites = false;
         public bool MergeFileTypes = false;
         public bool CopyOutlineToTopSilkscreen = false;
+        public bool ShowBoardLabels = true;
 
         public GerberOutline GetOutline(Dictionary<string, GerberOutline> GerberOutlines, string gerberPath)
         {

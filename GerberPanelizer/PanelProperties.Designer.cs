@@ -72,6 +72,11 @@
             0,
             0,
             0});
+            this.WidthBox.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
             this.WidthBox.Name = "WidthBox";
             this.WidthBox.Size = new System.Drawing.Size(240, 38);
             this.WidthBox.TabIndex = 0;
@@ -88,6 +93,11 @@
             this.HeightBox.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.HeightBox.Maximum = new decimal(new int[] {
             100000,
+            0,
+            0,
+            0});
+            this.HeightBox.Minimum = new decimal(new int[] {
+            1,
             0,
             0,
             0});

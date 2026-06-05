@@ -82,7 +82,11 @@ namespace GerberCombinerBuilder
             //TV.Dock = DockStyle.Right;
             TV.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             ID.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            
+
+            panel3.AutoSize = false;
+            this.Shown += (s, e) => { panel3.Height = panel2.Height / 2; };
+            panel2.SizeChanged += (s, e) => { panel3.Height = panel2.Height / 2; };
+
             RemovePanelizer();
 
             
@@ -171,11 +175,11 @@ namespace GerberCombinerBuilder
 
             ToolStripMenuItem breaktabsMenu = new ToolStripMenuItem("&Breaktabs");
             ToolStripMenuItem insertTabItem = new ToolStripMenuItem("Insert Breaktab", null, (s, e) => ActivePanelizeInstance?.AddTab(new GerberLibrary.Core.Primitives.PointD(0, 0)));
-            ToolStripMenuItem createTabsItem = new ToolStripMenuItem("Create Breaktabs", null, (s, e) => { if (ActivePanelizeInstance != null) { ActivePanelizeInstance.ThePanel.BuildAutoTabs(new GerberLibrary.StandardConsoleLog()); ActivePanelizeInstance.Redraw(true); } });
-            ToolStripMenuItem deleteAllTabsItem = new ToolStripMenuItem("Delete all Breaktabs", null, (s, e) => { if (ActivePanelizeInstance != null) { ActivePanelizeInstance.ThePanel.RemoveAllTabs(false); ActivePanelizeInstance.Redraw(true); } });
-            ToolStripMenuItem deleteErrorTabsItem = new ToolStripMenuItem("Delete all Breaktabs with errors", null, (s, e) => { if (ActivePanelizeInstance != null) { ActivePanelizeInstance.ThePanel.RemoveAllTabs(true); ActivePanelizeInstance.Redraw(true); } });
-            ToolStripMenuItem mergeTabsItem = new ToolStripMenuItem("Merge Overlapping Breaktabs", null, (s, e) => { if (ActivePanelizeInstance != null) { ActivePanelizeInstance.ThePanel.MergeOverlappingTabs(); ActivePanelizeInstance.Redraw(true); } });
-            ToolStripMenuItem doItAllItem = new ToolStripMenuItem("Do It All (remove→create→clean→merge)", null, (s, e) => { if (ActivePanelizeInstance != null) { ActivePanelizeInstance.ThePanel.RemoveAllTabs(); ActivePanelizeInstance.ThePanel.GenerateTabLocations(); ActivePanelizeInstance.ThePanel.RemoveAllTabs(true); ActivePanelizeInstance.ThePanel.MergeOverlappingTabs(); ActivePanelizeInstance.Redraw(true); } });
+            ToolStripMenuItem createTabsItem = new ToolStripMenuItem("Create Breaktabs", null, (s, e) => { if (ActivePanelizeInstance != null) { ActivePanelizeInstance.ThePanel.BuildAutoTabs(new GerberLibrary.StandardConsoleLog()); ActivePanelizeInstance.Redraw(true); ActivePanelizeInstance.TV.BuildTree(ActivePanelizeInstance, ActivePanelizeInstance.ThePanel.TheSet); } });
+            ToolStripMenuItem deleteAllTabsItem = new ToolStripMenuItem("Delete all Breaktabs", null, (s, e) => { if (ActivePanelizeInstance != null) { ActivePanelizeInstance.ThePanel.RemoveAllTabs(false); ActivePanelizeInstance.Redraw(true); ActivePanelizeInstance.TV.BuildTree(ActivePanelizeInstance, ActivePanelizeInstance.ThePanel.TheSet); } });
+            ToolStripMenuItem deleteErrorTabsItem = new ToolStripMenuItem("Delete all Breaktabs with errors", null, (s, e) => { if (ActivePanelizeInstance != null) { ActivePanelizeInstance.ThePanel.RemoveAllTabs(true); ActivePanelizeInstance.Redraw(true); ActivePanelizeInstance.TV.BuildTree(ActivePanelizeInstance, ActivePanelizeInstance.ThePanel.TheSet); } });
+            ToolStripMenuItem mergeTabsItem = new ToolStripMenuItem("Merge Overlapping Breaktabs", null, (s, e) => { if (ActivePanelizeInstance != null) { ActivePanelizeInstance.ThePanel.MergeOverlappingTabs(); ActivePanelizeInstance.Redraw(true); ActivePanelizeInstance.TV.BuildTree(ActivePanelizeInstance, ActivePanelizeInstance.ThePanel.TheSet); } });
+            ToolStripMenuItem doItAllItem = new ToolStripMenuItem("Do It All (remove→create→clean→merge)", null, (s, e) => { if (ActivePanelizeInstance != null) { ActivePanelizeInstance.ThePanel.RemoveAllTabs(); ActivePanelizeInstance.ThePanel.GenerateTabLocations(); ActivePanelizeInstance.ThePanel.RemoveAllTabs(true); ActivePanelizeInstance.ThePanel.MergeOverlappingTabs(); ActivePanelizeInstance.Redraw(true); ActivePanelizeInstance.TV.BuildTree(ActivePanelizeInstance, ActivePanelizeInstance.ThePanel.TheSet); } });
             breaktabsMenu.DropDownItems.Add(insertTabItem);
             breaktabsMenu.DropDownItems.Add(createTabsItem);
             breaktabsMenu.DropDownItems.Add(new ToolStripSeparator());
@@ -500,13 +504,6 @@ namespace GerberCombinerBuilder
                     ActivePanelizeInstance.SaveFile(ActivePanelizeInstance.LoadedFile);
                 }
             }
-        }
-
-        private void helpWorkflowToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            string curDir = Directory.GetCurrentDirectory();
-            string Url = String.Format("file:///{0}/Help/welcome.html", curDir);
-            Process.Start(Url);
         }
 
         private void GerberPanelizerParent_FormClosing(object sender, FormClosingEventArgs e)

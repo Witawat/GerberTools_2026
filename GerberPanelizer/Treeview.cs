@@ -47,12 +47,14 @@ namespace GerberCombinerBuilder
             {
                 if (TargetInstance.GetType() == typeof(GerberInstance))
                 {
-                    return String.Format(CultureInfo.InvariantCulture, "Instance: {0} {1:F3},{2:F3} {3:F1}", Path.GetFileNameWithoutExtension((TargetInstance as GerberInstance).GerberPath), TargetInstance.Center.X, TargetInstance.Center.Y, TargetInstance.Angle);
+                    var gi = TargetInstance as GerberInstance;
+                    return String.Format(CultureInfo.InvariantCulture, "Instance: {0} {1:F3},{2:F3} {3:F1}", Path.GetFileNameWithoutExtension(gi.GerberPath), TargetInstance.Center.X, TargetInstance.Center.Y, TargetInstance.Angle);
                 }
-                else
+                else if (TargetInstance is BreakTab bt)
                 {
-                    return "tab";
+                    return String.Format(CultureInfo.InvariantCulture, "Tab @ {0:F1},{1:F1} R:{2:F2} Err:{3}", TargetInstance.Center.X, TargetInstance.Center.Y, bt.Radius, bt.Errors.Count);
                 }
+                return "unknown";
             }
         }
 
@@ -100,6 +102,11 @@ namespace GerberCombinerBuilder
 
             }
 
+            foreach (GerberFileNode t in Gerbers.Nodes)
+            {
+                t.Text = Path.GetFileNameWithoutExtension(t.pPath) + " (" + t.Nodes.Count + " instances)";
+            }
+
 
             foreach (var t in S.Tabs)
             {
@@ -122,6 +129,7 @@ namespace GerberCombinerBuilder
             if (e.Button == System.Windows.Forms.MouseButtons.Right)
             {
                 TreeNode node = treeView1.GetNodeAt(e.Location);
+                if (node == null) return;
                 if (node.GetType() == typeof(InstanceTreeNode))
                 {
                     var P = PointToScreen(new Point(e.X, e.Y));
@@ -145,6 +153,7 @@ namespace GerberCombinerBuilder
             }
             if (treeView1.SelectedNode.GetType() == typeof(GerberFileNode))
             {
+                TargetHost.PushUndo();
                 var path = (treeView1.SelectedNode as GerberFileNode).pPath;
                 if (TargetHost.ThePanel.TheSet.LoadedOutlines.Contains(path))
                 {

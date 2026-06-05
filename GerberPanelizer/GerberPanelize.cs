@@ -77,6 +77,7 @@ namespace GerberCombinerBuilder
         private ToolStripStatusLabel MouseCoordLabel;
         private ToolStripStatusLabel ZoomLabel;
         private ToolStripStatusLabel InstanceCountLabel;
+        private ToolTip hoverToolTip = new ToolTip();
 
 
         public GerberPanelize(GerberPanelizerParent Host, Treeview tv, InstanceDialog id)
@@ -115,6 +116,9 @@ namespace GerberCombinerBuilder
             MouseCoordLabel = new ToolStripStatusLabel("0, 0") { BorderSides = ToolStripStatusLabelBorderSides.Right };
             ZoomLabel = new ToolStripStatusLabel("Zoom: 1.0x") { BorderSides = ToolStripStatusLabelBorderSides.Right };
             InstanceCountLabel = new ToolStripStatusLabel("Instances: 0");
+            var githubLink = new ToolStripStatusLabel("GitHub") { ForeColor = Color.Blue, IsLink = true };
+            githubLink.Click += (s, e) => { System.Diagnostics.Process.Start("https://github.com/Witawat/GerberTools_2026/"); };
+            statusStrip1.Items.Insert(0, githubLink);
             statusStrip1.Items.Insert(0, InstanceCountLabel);
             statusStrip1.Items.Insert(0, ZoomLabel);
             statusStrip1.Items.Insert(0, MouseCoordLabel);
@@ -430,6 +434,7 @@ namespace GerberCombinerBuilder
                 var bbox = outline.TheGerber.BoundingBox;
                 GI.Center = new PointD(worldCoord.X - bbox.TopLeft.X, worldCoord.Y - bbox.TopLeft.Y);
             }
+            ClampInstanceToPanel(GI);
             SetSelectedInstance(GI);
             CheckAndResizeCanvas();
             TV.BuildTree(this, ThePanel.TheSet);
@@ -461,6 +466,19 @@ namespace GerberCombinerBuilder
             BaseName = Path.GetFileNameWithoutExtension(FileName);
             BuildTitle();
             LoadedFile = FileName;
+        }
+
+        private void ClampInstanceToPanel(GerberInstance GI)
+        {
+            if (!ThePanel.GerberOutlines.TryGetValue(GI.GerberPath, out var outline) || !outline.TheGerber.BoundingBox.Valid)
+                return;
+
+            var bbox = outline.TheGerber.BoundingBox;
+            double panelW = ThePanel.TheSet.Width;
+            double panelH = ThePanel.TheSet.Height;
+
+            GI.Center.X = Math.Max(-bbox.TopLeft.X, Math.Min(GI.Center.X, panelW - bbox.BottomRight.X));
+            GI.Center.Y = Math.Max(-bbox.TopLeft.Y, Math.Min(GI.Center.Y, panelH - bbox.BottomRight.Y));
         }
 
         private void DoMouseDown(MouseEventArgs e)
@@ -738,6 +756,20 @@ namespace GerberCombinerBuilder
                 if (newHoverShape != HoverShape)
                 {
                     HoverShape = newHoverShape;
+                    if (HoverShape is GerberInstance gi)
+                    {
+                        hoverToolTip.SetToolTip(glControl1, string.Format(CultureInfo.InvariantCulture, "{0}\nPos: {1:F2}, {2:F2}\nAngle: {3:F1}\nTabs: {4}",
+                            Path.GetFileName(gi.GerberPath), gi.Center.X, gi.Center.Y, gi.Angle, gi.Tabs.Count));
+                    }
+                    else if (HoverShape is BreakTab bt)
+                    {
+                        hoverToolTip.SetToolTip(glControl1, string.Format(CultureInfo.InvariantCulture, "Tab\nPos: {0:F2}, {1:F2}\nRadius: {2:F2}\nErrors: {3}",
+                            bt.Center.X, bt.Center.Y, bt.Radius, bt.Errors.Count));
+                    }
+                    else
+                    {
+                        hoverToolTip.SetToolTip(glControl1, null);
+                    }
                     Redraw(false);
                 }
             }
@@ -939,27 +971,6 @@ namespace GerberCombinerBuilder
             GL.Hint(HintTarget.LineSmoothHint, HintMode.Nicest);
             GL.Hint(HintTarget.PointSmoothHint, HintMode.Nicest);
 
-            if (ShowGrid)
-            {
-                GL.Color4(0.15f, 0.15f, 0.15f, 0.3f);
-                GL.LineWidth(0.5f);
-                GL.Begin(PrimitiveType.Lines);
-                double gridStep = Math.Max(SnapDistance(), 1);
-                double viewLeft = CenterPoint.X - glControl1.Width / (2 * Zoom);
-                double viewRight = CenterPoint.X + glControl1.Width / (2 * Zoom);
-                double viewBottom = CenterPoint.Y - glControl1.Height / (2 * Zoom);
-                double viewTop = CenterPoint.Y + glControl1.Height / (2 * Zoom);
-                for (double x = Math.Floor(viewLeft / gridStep) * gridStep; x <= viewRight; x += gridStep)
-                {
-                    GL.Vertex2(x, viewBottom); GL.Vertex2(x, viewTop);
-                }
-                for (double y = Math.Floor(viewBottom / gridStep) * gridStep; y <= viewTop; y += gridStep)
-                {
-                    GL.Vertex2(viewLeft, y); GL.Vertex2(viewRight, y);
-                }
-                GL.End();
-            }
-
             ThePanel.DrawBoardBitmap(1.0f, GI, glControl1.Width, glControl1.Height, SelectedInstance, HoverShape, SnapDistance(), Zoom);
     
     // Highlight other selected instances
@@ -967,7 +978,7 @@ namespace GerberCombinerBuilder
     {
         if (inst != SelectedInstance)
         {
-             ThePanel.RenderInstance(GI, (float)DrawingScale, Color.Black, inst, false, true, false, Zoom);
+             ThePanel.RenderInstance(GI, (float)DrawingScale, Color.Cyan, inst, false, true, false, Zoom);
         }
     }
 
@@ -1109,20 +1120,34 @@ namespace GerberCombinerBuilder
                             this.Cursor = Cursors.WaitCursor;
                             var dropPointCapture = DropPoint;
                             var R = await Task.Run(() => ThePanel.AddGerberFolder(new StandardConsoleLog(), S));
+                            int staggerIndex = 0;
                             foreach (var s in R)
                             {
-                                GerberInstance GI = new GerberInstance() { GerberPath = s };
-                                if (ThePanel.GerberOutlines.TryGetValue(s, out var outline) && outline.TheGerber.BoundingBox.Valid)
+                                using (var dlg = new InstanceCountDialog(Path.GetFileName(s)))
                                 {
-                                    var bbox = outline.TheGerber.BoundingBox;
-                                    GI.Center = new PointD(dropPointCapture.X - bbox.TopLeft.X, dropPointCapture.Y - bbox.TopLeft.Y);
+                                     if (dlg.ShowDialog(this) != DialogResult.OK)
+                                        continue;
+                                    int count = dlg.InstanceCount;
+                                    for (int n = 0; n < count; n++)
+                                    {
+                                        GerberInstance GI = new GerberInstance() { GerberPath = s };
+                                        if (ThePanel.GerberOutlines.TryGetValue(s, out var outline) && outline.TheGerber.BoundingBox.Valid)
+                                        {
+                                            var bbox = outline.TheGerber.BoundingBox;
+                                            GI.Center = new PointD(dropPointCapture.X - bbox.TopLeft.X + staggerIndex * 12, dropPointCapture.Y - bbox.TopLeft.Y + staggerIndex * 12);
+                                            ClampInstanceToPanel(GI);
+                                            staggerIndex++;
+                                        }
+                                        else
+                                        {
+                                            GI.Center = new PointD(dropPointCapture.X + staggerIndex * 12, dropPointCapture.Y + staggerIndex * 12);
+                                            ClampInstanceToPanel(GI);
+                                            staggerIndex++;
+                                        }
+                                        ThePanel.TheSet.Instances.Add(GI);
+                                        SelectedInstance = GI;
+                                    }
                                 }
-                                else
-                                {
-                                    GI.Center = dropPointCapture;
-                                }
-                                ThePanel.TheSet.Instances.Add(GI);
-                                SelectedInstance = GI;
                             }
                         }
                         catch (Exception ex)
@@ -1230,16 +1255,30 @@ namespace GerberCombinerBuilder
                         foreach (var file in ofd.FileNames)
                         {
                             var R = await Task.Run(() => ThePanel.AddGerberFolder(new StandardConsoleLog(), file));
+                            int staggerIndex = 0;
                             foreach (var s in R)
                             {
-                                GerberInstance GI = new GerberInstance() { GerberPath = s };
-                                if (ThePanel.GerberOutlines.TryGetValue(s, out var outline) && outline.TheGerber.BoundingBox.Valid)
+                                using (var dlg = new InstanceCountDialog(Path.GetFileName(s)))
                                 {
-                                    var bbox = outline.TheGerber.BoundingBox;
-                                    GI.Center = new PointD(-bbox.TopLeft.X, -bbox.TopLeft.Y);
+                                     if (dlg.ShowDialog(this) != DialogResult.OK)
+                                        continue;
+                                    int count = dlg.InstanceCount;
+                                    for (int n = 0; n < count; n++)
+                                    {
+                                        GerberInstance GI = new GerberInstance() { GerberPath = s };
+                                        if (ThePanel.GerberOutlines.TryGetValue(s, out var outline) && outline.TheGerber.BoundingBox.Valid)
+                                        {
+                                            var bbox = outline.TheGerber.BoundingBox;
+                                            double centerX = (ThePanel.TheSet.Width - (bbox.BottomRight.X + bbox.TopLeft.X)) / 2;
+                                            double centerY = (ThePanel.TheSet.Height - (bbox.BottomRight.Y + bbox.TopLeft.Y)) / 2;
+                                            GI.Center = new PointD(centerX + staggerIndex * 12, centerY + staggerIndex * 12);
+                                            ClampInstanceToPanel(GI);
+                                            staggerIndex++;
+                                        }
+                                        ThePanel.TheSet.Instances.Add(GI);
+                                        SelectedInstance = GI;
+                                    }
                                 }
-                                ThePanel.TheSet.Instances.Add(GI);
-                                SelectedInstance = GI;
                             }
                         }
                     }
@@ -1260,16 +1299,30 @@ namespace GerberCombinerBuilder
                         this.Cursor = Cursors.WaitCursor;
                         var folder = folderBrowserDialog1.SelectedPath;
                         var R = await Task.Run(() => ThePanel.AddGerberFolder(new StandardConsoleLog(), folder));
+                        int staggerIndex = 0;
                         foreach (var s in R)
                         {
-                            GerberInstance GI = new GerberInstance() { GerberPath = s };
-                            if (ThePanel.GerberOutlines.TryGetValue(s, out var outline) && outline.TheGerber.BoundingBox.Valid)
+                            using (var dlg = new InstanceCountDialog(Path.GetFileName(s)))
                             {
-                                var bbox = outline.TheGerber.BoundingBox;
-                                GI.Center = new PointD(-bbox.TopLeft.X, -bbox.TopLeft.Y);
+                                if (dlg.ShowDialog(this) != DialogResult.OK)
+                                    continue;
+                                int count = dlg.InstanceCount;
+                                for (int n = 0; n < count; n++)
+                                {
+                                    GerberInstance GI = new GerberInstance() { GerberPath = s };
+                                    if (ThePanel.GerberOutlines.TryGetValue(s, out var outline) && outline.TheGerber.BoundingBox.Valid)
+                                    {
+                                        var bbox = outline.TheGerber.BoundingBox;
+                                        double centerX = (ThePanel.TheSet.Width - (bbox.BottomRight.X + bbox.TopLeft.X)) / 2;
+                                        double centerY = (ThePanel.TheSet.Height - (bbox.BottomRight.Y + bbox.TopLeft.Y)) / 2;
+                                        GI.Center = new PointD(centerX + staggerIndex * 12, centerY + staggerIndex * 12);
+                                        ClampInstanceToPanel(GI);
+                                        staggerIndex++;
+                                    }
+                                    ThePanel.TheSet.Instances.Add(GI);
+                                    SelectedInstance = GI;
+                                }
                             }
-                            ThePanel.TheSet.Instances.Add(GI);
-                            SelectedInstance = GI;
                         }
                     }
                     catch (Exception ex)
@@ -1613,6 +1666,7 @@ namespace GerberCombinerBuilder
             foreach (var i in ThePanel.TheSet.Instances)
             {
                 var bb = i.BoundingBox;
+                if (!bb.Valid) continue;
                 if (bb.TopLeft.X < minX) { minX = bb.TopLeft.X - 2; changed = true; }
                 if (bb.TopLeft.Y < minY) { minY = bb.TopLeft.Y - 2; changed = true; }
                 if (bb.BottomRight.X > maxX) { maxX = bb.BottomRight.X + 2; changed = true; }
@@ -1768,6 +1822,7 @@ namespace GerberCombinerBuilder
                     {
                         inst.Center.X += 5;
                         inst.Center.Y += 5;
+                        ClampInstanceToPanel(inst);
                         // We need to re-link or re-load the outlines?
                         // GerberInstance has GerberPath
                         // We need to ensure loaded outlines has it?
@@ -1803,6 +1858,7 @@ namespace GerberCombinerBuilder
                     SetSelectedInstance(SelectedInstance);
                     ThePanel.UpdateShape(new StandardConsoleLog());
                     Redraw(true);
+                    TV.BuildTree(this, ThePanel.TheSet);
                 }
             }
              catch(Exception e) { Console.WriteLine("Paste failed: " + e.Message); Logger.Log(e, "Clipboard paste"); }
@@ -1818,6 +1874,7 @@ namespace GerberCombinerBuilder
                 if (inst is GerberInstance)
                 {
                     var clone = new GerberInstance() { GerberPath = ((GerberInstance)inst).GerberPath, Center = new PointD(inst.Center.X + 5, inst.Center.Y + 5), Angle = inst.Angle };
+                    ClampInstanceToPanel(clone);
                     ThePanel.TheSet.Instances.Add(clone);
                     newInsts.Add(clone);
                 }
@@ -1857,6 +1914,7 @@ namespace GerberCombinerBuilder
             SetSelectedInstance(null);
             ThePanel.UpdateShape(new StandardConsoleLog());
             Redraw(true);
+            TV.BuildTree(this, ThePanel.TheSet);
         }
 
         public void AlignLeft()
