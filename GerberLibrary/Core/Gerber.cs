@@ -24,7 +24,7 @@ namespace GerberLibrary
         public Color BoardRenderPadColor = Gerber.ParseColor("gold");
         public Color BoardRenderSilkColor = Gerber.ParseColor("white");
 
-        public Color BackgroundColor = Color.FromArgb(10, 10, 40);
+        public Color BackgroundColor = Color.FromArgb(45, 45, 48);
         public Color BoardRenderTraceColor = Gerber.ParseColor("green");
         public void SetupColors(string SolderMaskColor, string SilkScreenColor, string TracesColor = "auto", string CopperColor = "gold")
         {
@@ -37,13 +37,32 @@ namespace GerberLibrary
         {
             switch (layer)
             {
-                case BoardLayer.Drill: return BackgroundColor;
-                case BoardLayer.Copper: return BoardRenderCopperColor;
-                case BoardLayer.Outline: return BoardRenderColor;
-                case BoardLayer.SolderMask: return MathHelpers.Interpolate(BoardRenderColor, BoardRenderBaseMaterialColor, 0.2f);
-                case BoardLayer.Silk: return BoardRenderSilkColor;
+                case BoardLayer.Copper:      return ColorFromHSV(15, 0.8, 0.85);
+                case BoardLayer.SolderMask:  return ColorFromHSV(120, 0.7, 0.75);
+                case BoardLayer.Silk:        return ColorFromHSV(200, 0.5, 0.95);
+                case BoardLayer.Paste:       return ColorFromHSV(45, 0.8, 0.9);
+                case BoardLayer.Outline:     return ColorFromHSV(270, 0.6, 0.85);
+                case BoardLayer.Drill:       return ColorFromHSV(330, 0.8, 0.9);
+                case BoardLayer.Mill:        return ColorFromHSV(30, 0.85, 0.85);
+                case BoardLayer.Carbon:      return ColorFromHSV(0, 0.8, 0.8);
+                case BoardLayer.Assembly:    return ColorFromHSV(75, 0.7, 0.85);
+                case BoardLayer.Courtyard:   return ColorFromHSV(300, 0.7, 0.85);
+                case BoardLayer.Fab:         return ColorFromHSV(170, 0.7, 0.8);
+                case BoardLayer.Notes:       return ColorFromHSV(210, 0.7, 0.85);
+                case BoardLayer.Utility:     return ColorFromHSV(250, 0.6, 0.85);
+                case BoardLayer.UserDrawings: return ColorFromHSV(55, 0.7, 0.8);
+                case BoardLayer.UserComments: return ColorFromHSV(10, 0.75, 0.85);
+                case BoardLayer.UserEco:     return ColorFromHSV(145, 0.7, 0.8);
+                case BoardLayer.Unknown:     return Color.FromArgb(140, 140, 140);
+                case BoardLayer.Any:         return Color.FromArgb(180, 180, 180);
             }
-            return Color.FromArgb(100, 255, 255, 255);
+            return Color.FromArgb(160, 160, 160);
+        }
+
+        private static Color ColorFromHSV(double h, double s, double v)
+        {
+            MathHelpers.HsvToRgb(h, s, v, out int r, out int g, out int b);
+            return Color.FromArgb(r, g, b);
         }
     }
     public static class Gerber
@@ -180,13 +199,24 @@ namespace GerberLibrary
             int R = 0;
             switch (layer)
             {
-
-                case BoardLayer.Mill: R = 11; break;
-                case BoardLayer.Silk: R = 101; break;
-                case BoardLayer.Paste: R = 10; break;
-                case BoardLayer.SolderMask: R = 102; break;
-                case BoardLayer.Copper: R = 100; break;
-                case BoardLayer.Carbon: R = 103; break;
+                case BoardLayer.Copper:     R = 10; break;
+                case BoardLayer.Paste:      R = 20; break;
+                case BoardLayer.SolderMask: R = 30; break;
+                case BoardLayer.Carbon:     R = 40; break;
+                case BoardLayer.Silk:       R = 50; break;
+                case BoardLayer.Assembly:   R = 60; break;
+                case BoardLayer.Courtyard:  R = 70; break;
+                case BoardLayer.Fab:        R = 80; break;
+                case BoardLayer.Notes:      R = 90; break;
+                case BoardLayer.Drill:      R = 100; break;
+                case BoardLayer.Mill:       R = 110; break;
+                case BoardLayer.Outline:    R = 120; break;
+                case BoardLayer.Utility:    R = 130; break;
+                case BoardLayer.UserDrawings: R = 140; break;
+                case BoardLayer.UserComments: R = 150; break;
+                case BoardLayer.UserEco:    R = 160; break;
+                case BoardLayer.Unknown:    R = 170; break;
+                case BoardLayer.Any:        R = 180; break;
             }
             if (side == BoardSide.Bottom) R *= -1;
             return R;

@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using GerberLibrary;
 using GerberLibrary.Core;
-using Ionic.Zip;
+using System.IO.Compression;
 using System.IO;
 
 namespace GerberViewer
@@ -20,6 +20,7 @@ namespace GerberViewer
             public ParsedGerber File;
             public int sortindex;
             public Color Color;
+            public float Alpha = 1.0f;
             internal LayerDisplay Panel;
         }
         public GerberLibrary.BoardRenderColorSet Colors = new GerberLibrary.BoardRenderColorSet();
@@ -87,17 +88,19 @@ namespace GerberViewer
             string ext = filesplit[filesplit.Count() - 1].ToLower();
             if (ext == "zip")
             {
-                using (ZipFile zip1 = ZipFile.Read(filename))
+                using (ZipArchive archive = ZipFile.OpenRead(filename))
                 {
-                    foreach (ZipEntry e in zip1)
+                    foreach (ZipArchiveEntry e in archive.Entries)
                     {
+                        if (string.IsNullOrEmpty(e.Name))
+                            continue;
                         MemoryStream MS = new MemoryStream();
-                        if (e.IsDirectory == false)
+                        using (var entryStream = e.Open())
                         {
-                            e.Extract(MS);
-                            MS.Seek(0, SeekOrigin.Begin);
-                            AddFileStream(log, MS, e.FileName, drillscaler);
+                            entryStream.CopyTo(MS);
                         }
+                        MS.Seek(0, SeekOrigin.Begin);
+                        AddFileStream(log, MS, e.FullName, drillscaler);
                     }
                 }
                 return;

@@ -17,7 +17,7 @@ namespace GerberViewer
         LoadedStuff Document;
         GerberViewerMainForm ParentGerberViewerForm;
         
-        private FlowLayoutPanel buttonPanel = new FlowLayoutPanel();
+        private Panel buttonPanel = new Panel();
         private DataGridView dataGridView1 = new DataGridView();
         private Button addNewRowButton = new Button();
         private Button deleteRowButton = new Button();
@@ -34,40 +34,96 @@ namespace GerberViewer
             CloseButtonVisible = false;
 
             InitializeComponent();
-            UpdateLoadedStuff();
-         
+          
             CloseButton = false;
             CloseButtonVisible = false;
             _log = log;
 
             Init();
+            UpdateLoadedStuff();
         }
 
         private void SetupLayout()
         {
+            int col1 = 10, col2 = 95, col3 = 180, col4 = 265;
+            int row1 = 8, row2 = 36;
+
+            var showAllButton = new Button();
+            showAllButton.Text = "All On";
+            showAllButton.Location = new Point(col1, row1);
+            showAllButton.Size = new Size(80, 22);
+            showAllButton.Click += (s, ev) =>
+            {
+                for (int i = 0; i < Document.Gerbers.Count; i++)
+                {
+                    Document.Gerbers[i].visible = true;
+                    if (i < dataGridView1.Rows.Count)
+                        dataGridView1[0, i].Value = "\u2713";
+                }
+                dataGridView1.Refresh();
+                ParentGerberViewerForm.RefreshDisplays();
+            };
+
+            var hideAllButton = new Button();
+            hideAllButton.Text = "All Off";
+            hideAllButton.Location = new Point(col2, row1);
+            hideAllButton.Size = new Size(80, 22);
+            hideAllButton.Click += (s, ev) =>
+            {
+                for (int i = 0; i < Document.Gerbers.Count; i++)
+                {
+                    Document.Gerbers[i].visible = false;
+                    if (i < dataGridView1.Rows.Count)
+                        dataGridView1[0, i].Value = "";
+                }
+                dataGridView1.Refresh();
+                ParentGerberViewerForm.RefreshDisplays();
+            };
+
+            var invertButton = new Button();
+            invertButton.Text = "Invert";
+            invertButton.Location = new Point(col3, row1);
+            invertButton.Size = new Size(80, 22);
+            invertButton.Click += (s, ev) =>
+            {
+                for (int i = 0; i < Document.Gerbers.Count; i++)
+                {
+                    Document.Gerbers[i].visible = !Document.Gerbers[i].visible;
+                    if (i < dataGridView1.Rows.Count)
+                        dataGridView1[0, i].Value = Document.Gerbers[i].visible ? "\u2713" : "";
+                }
+                dataGridView1.Refresh();
+                ParentGerberViewerForm.RefreshDisplays();
+            };
+
+            clearButton.Text = "Clear All";
+            clearButton.Location = new Point(col1, row2);
+            clearButton.Size = new Size(80, 22);
+            clearButton.Click += new EventHandler(ClearAllButtonClick);
+
+            save2ImgButton.Text = "Save to PNG";
+            save2ImgButton.Location = new Point(col2, row2);
+            save2ImgButton.Size = new Size(85, 22);
+            save2ImgButton.Click += new EventHandler(SaveSelectedFile2Img);
 
             addNewRowButton.Text = "Add";
-            addNewRowButton.Location = new Point(10, 10);
+            addNewRowButton.Location = new Point(col3, row2);
+            addNewRowButton.Size = new Size(80, 22);
             addNewRowButton.Click += new EventHandler(AddGerberFile);
 
             deleteRowButton.Text = "Remove";
-            deleteRowButton.Location = new Point(100, 10);
+            deleteRowButton.Location = new Point(col4, row2);
+            deleteRowButton.Size = new Size(80, 22);
             deleteRowButton.Click += new EventHandler(RemoveGerberFile);
 
-            clearButton.Text = "Remove All";
-            clearButton.Location = new Point(100, 10);
-            clearButton.Click += new EventHandler(ClearAllButtonClick);
-
-            save2ImgButton.Text = "Save Selected File To Image";
-            save2ImgButton.Location = new Point(200, 10);
-            save2ImgButton.AutoSize = true;
-            save2ImgButton.Click += new EventHandler(SaveSelectedFile2Img);
-
-            buttonPanel.Controls.Add(addNewRowButton);
-            buttonPanel.Controls.Add(deleteRowButton);
+            buttonPanel.Controls.Add(showAllButton);
+            buttonPanel.Controls.Add(hideAllButton);
+            buttonPanel.Controls.Add(invertButton);
             buttonPanel.Controls.Add(clearButton);
             buttonPanel.Controls.Add(save2ImgButton);
-            buttonPanel.Height = 50;
+            buttonPanel.Controls.Add(addNewRowButton);
+            buttonPanel.Controls.Add(deleteRowButton);
+            buttonPanel.Height = 68;
             buttonPanel.Dock = DockStyle.Bottom;
 
             this.Controls.Add(this.buttonPanel);
@@ -80,6 +136,7 @@ namespace GerberViewer
                 string filepath = Document.Gerbers[_curRowIndex].File.Name;
                 string savepath = CreateImageForSingleFile(filepath, Color.Black, Color.White, _log);
                 MessageBox.Show("Image saved: " + savepath);
+                return;
             }
             MessageBox.Show("Please choose a file first !");
         }
@@ -131,119 +188,160 @@ namespace GerberViewer
         {
             this.Controls.Add(dataGridView1);
 
-            dataGridView1.ColumnCount = 4;
+            dataGridView1.ColumnCount = 6;
 
-            dataGridView1.ColumnHeadersDefaultCellStyle.BackColor = Color.Navy;
+            dataGridView1.Columns[0].Name = "Vis";
+            dataGridView1.Columns[0].Width = 30;
+            dataGridView1.Columns[1].Name = "Colour";
+            dataGridView1.Columns[1].Width = 40;
+            dataGridView1.Columns[2].Name = "File";
+            dataGridView1.Columns[2].Width = 140;
+            dataGridView1.Columns[3].Name = "Layer";
+            dataGridView1.Columns[3].Width = 80;
+            dataGridView1.Columns[4].Name = "Side";
+            dataGridView1.Columns[4].Width = 55;
+            dataGridView1.Columns[5].Name = "Alpha";
+            dataGridView1.Columns[5].Width = 45;
+
+            dataGridView1.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(64, 64, 68);
             dataGridView1.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
             dataGridView1.ColumnHeadersDefaultCellStyle.Font =
                 new Font(dataGridView1.Font, FontStyle.Bold);
 
+            dataGridView1.BackgroundColor = Color.FromArgb(37, 37, 38);
+            dataGridView1.DefaultCellStyle.BackColor = Color.FromArgb(45, 45, 48);
+            dataGridView1.DefaultCellStyle.ForeColor = Color.FromArgb(220, 220, 220);
+            dataGridView1.DefaultCellStyle.SelectionBackColor = Color.FromArgb(0, 122, 204);
+            dataGridView1.DefaultCellStyle.SelectionForeColor = Color.White;
+
             dataGridView1.Name = "songsDataGridView";
-            dataGridView1.Location = new Point(8, 8);
-            dataGridView1.Size = new Size(500, 250);
+            dataGridView1.Dock = DockStyle.Fill;
             dataGridView1.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCellsExceptHeaders;
             dataGridView1.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
             dataGridView1.CellBorderStyle = DataGridViewCellBorderStyle.Single;
-            dataGridView1.GridColor = Color.DarkGray;
+            dataGridView1.GridColor = Color.FromArgb(60, 60, 62);
             dataGridView1.RowHeadersVisible = false;
             dataGridView1.AllowUserToAddRows = false;
-            dataGridView1.CellClick += DataGridView1_CellClick;
-            dataGridView1.Columns[0].Name = "Colour";
-            dataGridView1.Columns[0].HeaderText = "";
-            dataGridView1.Columns[0].Width = 20;
-
-            dataGridView1.Columns[1].Name = "Name";
-
-            dataGridView1.Columns[2].Name = "Layer";
-            dataGridView1.Columns[2].Width = 80;
-
-            dataGridView1.Columns[3].Name = "Side";
-            dataGridView1.Columns[3].Width = 80;
-
-            DataGridViewCheckBoxColumn VisibilityColumn = new DataGridViewCheckBoxColumn();
-
-            VisibilityColumn.HeaderText = "";
-            VisibilityColumn.FalseValue = "0";
-            VisibilityColumn.Width = 20;           
-            VisibilityColumn.TrueValue = "1";
-            dataGridView1.Columns.Insert(0, VisibilityColumn);
-
-
+            dataGridView1.AllowUserToResizeRows = false;
             dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dataGridView1.MultiSelect = false;
-            dataGridView1.Dock = DockStyle.Fill;
+            dataGridView1.ReadOnly = true;
+            dataGridView1.EditMode = DataGridViewEditMode.EditProgrammatically;
+            dataGridView1.CellClick += DataGridView1_CellClick;
             dataGridView1.CellPainting += DataGridView1_CellPainting;
-
-         //   dataGridView1.CellFormatting += new DataGridViewCellFormattingEventHandler(songsDataGridView_CellFormatting);
+            dataGridView1.RowPrePaint += DataGridView1_RowPrePaint;
         }
 
         private int _curRowIndex = -1;
         private void DataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex>= 0)
+            if (e.RowIndex < 0) return;
+            if (e.RowIndex >= Document.Gerbers.Count) return;
+
+            if (e.ColumnIndex == 0)
             {
-                ParentGerberViewerForm.ActivateTab(e.RowIndex);
-                _curRowIndex = e.RowIndex;
+                var gerb = Document.Gerbers[e.RowIndex];
+                gerb.visible = !gerb.visible;
+                dataGridView1[0, e.RowIndex].Value = gerb.visible ? "\u2713" : "";
+                dataGridView1.InvalidateCell(e.ColumnIndex, e.RowIndex);
+                ParentGerberViewerForm.RefreshDisplays();
+                return;
             }
+
+            if (dataGridView1.Columns[e.ColumnIndex].Name == "Colour")
+            {
+                var gerb = Document.Gerbers[e.RowIndex];
+                using (ColorDialog cd = new ColorDialog())
+                {
+                    cd.Color = gerb.Color;
+                    cd.FullOpen = true;
+                    if (cd.ShowDialog() == DialogResult.OK)
+                    {
+                        gerb.Color = cd.Color;
+                        dataGridView1.InvalidateRow(e.RowIndex);
+                        ParentGerberViewerForm.RefreshDisplays();
+                    }
+                }
+                return;
+            }
+
+            if (dataGridView1.Columns[e.ColumnIndex].Name == "Alpha")
+            {
+                var gerb = Document.Gerbers[e.RowIndex];
+                float[] alphas = { 1.0f, 0.8f, 0.6f, 0.4f, 0.2f };
+                int curIdx = 0;
+                for (int i = 0; i < alphas.Length; i++)
+                {
+                    if (Math.Abs(gerb.Alpha - alphas[i]) < 0.05f) { curIdx = i; break; }
+                }
+                gerb.Alpha = alphas[(curIdx + 1) % alphas.Length];
+                dataGridView1[5, e.RowIndex].Value = string.Format("{0}%", (int)(gerb.Alpha * 100));
+                ParentGerberViewerForm.RefreshDisplays();
+                return;
+            }
+
+            ParentGerberViewerForm.ActivateTab(e.RowIndex);
+            _curRowIndex = e.RowIndex;
         }
 
         private void DataGridView1_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
         {
-            if (e.ColumnIndex == dataGridView1.Columns["Colour"].Index && e.RowIndex >= 0)
+            var colourCol = dataGridView1.Columns["Colour"];
+            if (colourCol != null && e.ColumnIndex == colourCol.Index && e.RowIndex >= 0)
             {
                 if (e.Value != null)
                 {
+                    e.PaintBackground(e.ClipBounds, true);
                     var C = Color.FromArgb(int.Parse((string)e.Value));
-                    Rectangle newRect = new Rectangle(e.CellBounds.X + 1,
-               e.CellBounds.Y + 1, e.CellBounds.Width - 4,
-               e.CellBounds.Height - 4);
-
-                    using (
-                        Brush gridBrush = new SolidBrush(this.dataGridView1.GridColor),
-                        backColorBrush = new SolidBrush(C))
+                    using (Brush backColorBrush = new SolidBrush(C))
                     {
-                        using (Pen gridLinePen = new Pen(gridBrush))
-                        {
-                            // Erase the cell.
-                            e.Graphics.FillRectangle(backColorBrush, e.CellBounds);
-                        }
+                        Rectangle r = new Rectangle(e.CellBounds.X + 4,
+                            e.CellBounds.Y + 4, e.CellBounds.Width - 8,
+                            e.CellBounds.Height - 8);
+                        e.Graphics.FillRectangle(backColorBrush, r);
+                        e.Graphics.DrawRectangle(Pens.Gray, r);
                     }
                     e.Handled = true;
                 }
-
             }
-        }
 
-        class CustomListViewItem : ListViewItem {
-            public LoadedStuff.DisplayGerber Gerb;
-
-        }
-        private void ListView1_DrawItem(object sender, DrawListViewItemEventArgs e)
-        {
-            var G = e.Graphics;
-            
-            CustomListViewItem clvi = e.Item as CustomListViewItem;
-            if (clvi == null) return;
-
-            if (clvi.Selected)
+            var visCol = dataGridView1.Columns["Vis"];
+            if (visCol != null && e.ColumnIndex == visCol.Index && e.RowIndex >= 0)
             {
-                G.FillRectangle(Brushes.Blue, e.Bounds);
-
+                e.PaintBackground(e.ClipBounds, true);
+                if (e.RowIndex < Document.Gerbers.Count && Document.Gerbers[e.RowIndex].visible)
+                {
+                    TextRenderer.DrawText(e.Graphics, "\u2713",
+                        dataGridView1.DefaultCellStyle.Font ?? this.Font,
+                        e.CellBounds, Color.Lime,
+                        TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+                }
+                e.Handled = true;
             }
-
-            if (clvi.Gerb.visible)
-            {
-                G.FillRectangle(new SolidBrush(clvi.Gerb.Color), new Rectangle(e.Bounds.Left + 1, e.Bounds.Top + 1, 10, 10));
-            }
-            G.DrawRectangle(new Pen(Color.FromArgb(20,20,20),1), new Rectangle(e.Bounds.Left+1, e.Bounds.Top+1, 10, 10));
-            G.DrawString(Path.GetFileName(clvi.Gerb.File.Name), new Font("Arial" ,10), Brushes.Black, e.Bounds.Left+13,e.Bounds.Top);
-            
         }
 
-        private void splitContainer1_Panel1_Paint(object sender, PaintEventArgs e)
+        private void DataGridView1_RowPrePaint(object sender, DataGridViewRowPrePaintEventArgs e)
         {
-
+            if (e.RowIndex < 0 || e.RowIndex >= Document.Gerbers.Count) return;
+            var side = Document.Gerbers[e.RowIndex].File.Side;
+            Color rowColor;
+            switch (side)
+            {
+                case GerberLibrary.Core.BoardSide.Top:
+                    rowColor = Color.FromArgb(55, 20, 20);
+                    break;
+                case GerberLibrary.Core.BoardSide.Bottom:
+                    rowColor = Color.FromArgb(20, 20, 55);
+                    break;
+                case GerberLibrary.Core.BoardSide.Both:
+                    rowColor = Color.FromArgb(20, 50, 20);
+                    break;
+                default:
+                    rowColor = Color.FromArgb(50, 50, 30);
+                    break;
+            }
+            dataGridView1.Rows[e.RowIndex].DefaultCellStyle.BackColor = rowColor;
         }
+
 
         public void UpdateLoadedStuff()
         {
@@ -251,11 +349,12 @@ namespace GerberViewer
             foreach(var a in Document.Gerbers)
             {
                 List<string> V = new List<string>();
-                V.Add(a.visible ? "1" : "0");
+                V.Add(a.visible ? "\u2713" : "");
                 V.Add(a.Color.ToArgb().ToString());
                 V.Add(Path.GetFileName(a.File.Name));
                 V.Add(a.File.Layer.ToString());
                 V.Add(a.File.Side.ToString());
+                V.Add(string.Format("{0}%", (int)(a.Alpha * 100)));
 
                 dataGridView1.Rows.Add(V.ToArray());
             };
@@ -301,48 +400,6 @@ namespace GerberViewer
         private void ClearAllButtonClick(object sender, EventArgs e)
         {
             ParentGerberViewerForm.ClearAll();
-        }
-
-        private void dataGridView1_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
-        {
-            if (this.dataGridView1.Columns["Colour"].Index == e.ColumnIndex && e.RowIndex >= 0)
-            {
-                Rectangle newRect = new Rectangle(e.CellBounds.X + 1,
-                    e.CellBounds.Y + 1, e.CellBounds.Width - 4,
-                    e.CellBounds.Height - 4);
-
-                using (
-                    Brush gridBrush = new SolidBrush(this.dataGridView1.GridColor),
-                    backColorBrush = new SolidBrush(e.CellStyle.BackColor))
-                {
-                    using (Pen gridLinePen = new Pen(gridBrush))
-                    {
-                        // Erase the cell.
-                        e.Graphics.FillRectangle(backColorBrush, e.CellBounds);
-
-                        // Draw the grid lines (only the right and bottom lines;
-                        // DataGridView takes care of the others).
-                        e.Graphics.DrawLine(gridLinePen, e.CellBounds.Left,
-                            e.CellBounds.Bottom - 1, e.CellBounds.Right - 1,
-                            e.CellBounds.Bottom - 1);
-                        e.Graphics.DrawLine(gridLinePen, e.CellBounds.Right - 1,
-                            e.CellBounds.Top, e.CellBounds.Right - 1,
-                            e.CellBounds.Bottom);
-
-                        // Draw the inset highlight box.
-                        e.Graphics.DrawRectangle(Pens.Blue, newRect);
-
-                        // Draw the text content of the cell, ignoring alignment.
-                        if (e.Value != null)
-                        {
-                            e.Graphics.DrawString((String)e.Value, e.CellStyle.Font,
-                                Brushes.Crimson, e.CellBounds.X + 2,
-                                e.CellBounds.Y + 2, StringFormat.GenericDefault);
-                        }
-                        e.Handled = true;
-                    }
-                }
-            }
         }
     }
 }

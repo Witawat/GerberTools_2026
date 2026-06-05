@@ -9,7 +9,9 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using GerberLibrary.Core;
 using GerberLibrary;
+using GerberLibrary.Core.Primitives;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 
@@ -20,7 +22,6 @@ namespace GerberViewer
         public LoadedStuff Document;
         public BoardSide DisplaySide;
         public LoadedStuff.DisplayGerber DispGerb;
-        Bitmap Cache;
         GerberVBO VBOCache = new GerberVBO();
         bool VBOCacheDirty = true;
         private GerberViewerMainForm MainForm;
@@ -28,17 +29,11 @@ namespace GerberViewer
 
         public LayerDisplay(LoadedStuff doc, BoardSide Side, GerberViewerMainForm _Owner)
         {
-
             MainForm = _Owner;
             DisplaySide = Side;
             Document = doc;
-            this.Load += LayerDisplay_Load;
-
             InitializeComponent();
-
-
             AddGLControl();
-            CloseButton = false;
             CloseButtonVisible = false;
         }
 
@@ -54,10 +49,22 @@ namespace GerberViewer
             this.glcontrol1.MouseEnter += pictureBox1_MouseEnter;
             this.glcontrol1.MouseMove += pictureBox1_MouseMove;
             this.glcontrol1.MouseLeave += pictureBox1_MouseLeave;
+            this.glcontrol1.MouseDown += pictureBox1_MouseDown;
+            this.glcontrol1.MouseUp += pictureBox1_MouseUp;
+            this.glcontrol1.MouseWheel += LayerDisplay_MouseWheel;
+            this.glcontrol1.MouseDoubleClick += LayerDisplay_MouseDoubleClick;
 
             glcontrol1.Paint += Glcontrol1_Paint;
 
             this.Controls.Add(glcontrol1);
+
+            var contextMenu = new ContextMenuStrip();
+            contextMenu.Items.Add("Layer Visibility...", null, (s, ev) => ShowLayerVisibilityForm());
+            contextMenu.Items.Add(new ToolStripSeparator());
+            contextMenu.Items.Add("Zoom to Fit", null, (s, ev) => PerformZoomToFit());
+            contextMenu.Items.Add("Toggle Measure Mode", null, (s, ev) => ToggleMeasureMode());
+            contextMenu.Items.Add("Export Viewport to PNG", null, (s, ev) => MainForm.ExportViewportToPng());
+            glcontrol1.ContextMenuStrip = contextMenu;
 
         }
 
@@ -120,19 +127,23 @@ void main()
 }
 
 ";
-
-        private void LayerDisplay_Load(object sender, EventArgs e)
+        private void EnsureGLInitialized()
         {
-            glLoaded = true;
-            glcontrol1.MakeCurrent();
-            MainShader = new ShaderProgram(vert, frag , false);
-            glcontrol1.Invalidate();
-
+            if (glLoaded) return;
+            lock (glInitLock)
+            {
+                if (glLoaded) return;
+                if (glcontrol1 == null) return;
+                glcontrol1.MakeCurrent();
+                MainShader = new ShaderProgram(vert, frag, false);
+                glLoaded = true;
+            }
         }
 
         private void Glcontrol1_Paint(object sender, PaintEventArgs e)
         {
-            if (!glLoaded) return;
+            EnsureGLInitialized();
+
             Bounds Bounds = new Bounds();
             foreach (var a in Document.Gerbers.OrderBy(x => x.sortindex))
             {
@@ -143,7 +154,6 @@ void main()
             {
                 VBOCache.Reset();
                 DrawGerbersToGraphicsInterface(Bounds, VBOCache);
-             //   VBOCache.DrawLine(new Pen(Color.White, 1), Bounds.TopLeft.ToF(), Bounds.BottomRight.ToF());
                 VBOCache.BuildVBO();
                 VBOCacheDirty = false;
             }
@@ -157,82 +167,77 @@ void main()
 
             GL.Ortho(0, glcontrol1.Width, glcontrol1.Height, 0, -100, 100);
             GL.LineWidth(1.0f);
-            //GL.Scale(0.01, 0.01, 1);
             GL.MatrixMode(MatrixMode.Modelview);
             GL.LoadIdentity();
             GL.Viewport(0, 0, glcontrol1.Width, glcontrol1.Height);
 
             Matrix4 View = Matrix4.CreateOrthographicOffCenter(0, glcontrol1.Width, glcontrol1.Height, 0, -100,100);
-            //            GI.Clear(Color.Yellow);
             GI.Clear(Document.Colors.BackgroundColor);
 
-            //            GGI.Clear(Document.Colors.BackgroundColor);
             float S = GetScaleAndBuildTransform(GI, Bounds);
+            currentScale = S;
             MainShader.Bind();
             var M = GI.GetGlMatrix();
             GL.Uniform1(MainShader.Uniforms["linescale"].address, 1.0f/S);
             GL.UniformMatrix4(MainShader.Uniforms["trans"].address, false, ref M);
             GL.UniformMatrix4(MainShader.Uniforms["view"].address, false, ref View);
-             GL.Enable(EnableCap.Blend);
+            GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             VBOCache.RenderVBO(MainShader);
             MainShader.UnBind();
-            //DrawGerbersToGraphicsInterface(Bounds, GI);
 
+            DrawMeasurementOverlays(GI, Bounds);
 
+            if (Document.CrossHairActive && Document.Gerbers.Count > 0)
             {
-                if (Document.CrossHairActive)
-                {
-                    if (Document.Gerbers.Count > 0)
-                    {
-                        float S2 = GetScaleAndBuildTransform(GI, Bounds);
-
-
-                        Color DimensionColor = Color.FromArgb(255, 255, 200);
-                        Pen P = new Pen(DimensionColor, 1.0f);
-
-                        P.DashPattern = new float[2] { 2, 2 };
-
-                        GI.DrawLine(P, (float)Bounds.TopLeft.X - 1000, Document.MouseY, (float)Bounds.BottomRight.X + 1000, Document.MouseY);
-                        GI.DrawLine(P, (float)Document.MouseX, (float)Bounds.TopLeft.Y - 1000, (float)Document.MouseX, (float)Bounds.BottomRight.Y + 1000);
-
-
-                        //DrawLabel(G2, String.Format("{0:N2}", Document.MouseX - Bounds.TopLeft.X), S, 12, DimensionColor, 5, 0, (float)Document.MouseX, (float)Bounds.TopLeft.Y, DisplaySide == BoardSide.Bottom);
-                        //DrawLabel(G2, String.Format("{0:N2}", Document.MouseY - Bounds.TopLeft.Y), S, 12, DimensionColor, 0, -14, (float)Bounds.TopLeft.X, (float)Document.MouseY, DisplaySide == BoardSide.Bottom);
-                        //DrawUpsideDown(G2, String.Format("{0:N2}", Document.MouseX), S, 12, Color.Yellow, 5 / S + (float)Document.MouseX, (float)Bounds.TopLeft.Y);
-
-
-                    }
-                }
+                Color DimensionColor = Color.FromArgb(255, 255, 200);
+                Pen P = new Pen(DimensionColor, 1.0f);
+                P.DashPattern = new float[2] { 2, 2 };
+                GI.DrawLine(P, (float)Bounds.TopLeft.X - 1000, Document.MouseY, (float)Bounds.BottomRight.X + 1000, Document.MouseY);
+                GI.DrawLine(P, (float)Document.MouseX, (float)Bounds.TopLeft.Y - 1000, (float)Document.MouseX, (float)Bounds.BottomRight.Y + 1000);
             }
 
             glcontrol1.SwapBuffers();
+            MainForm.UpdateStatusBar(this);
         }
 
         public LayerDisplay(LoadedStuff doc, LoadedStuff.DisplayGerber Gerb, GerberViewerMainForm _Owner)
         {
             MainForm = _Owner;
-            CloseButton = false;
-
-            CloseButtonVisible = false;
-
             DispGerb = Gerb;
             DisplaySide = Gerb.File.Side;
             Document = doc;
-            this.Load += LayerDisplay_Load;
             InitializeComponent();
             AddGLControl();
-
         }
 
         public float Zoomlevel = 1.0f;
 
         public PointF Offset = new PointF();
-        private bool MouseHovering;
         private int lastY;
         private int lastX;
         private GLControl glcontrol1;
         private bool glLoaded = false;
+        private object glInitLock = new object();
+        private bool isPanning = false;
+        private Point panStartMouse;
+        private PointF panStartOffset;
+        private float currentScale = 1.0f;
+
+        public HashSet<int> HiddenLayerIndices = new HashSet<int>();
+
+        public bool MeasureMode;
+        private bool measureActive;
+        private PointD measureStart;
+        private PointD measureCurrent;
+        private bool isPolyline;
+        private List<PointD> polylinePoints = new List<PointD>();
+        private double polylineTotal;
+        private List<Tuple<PointD, PointD>> measurements = new List<Tuple<PointD, PointD>>();
+
+        public double LastDistance { get; private set; }
+        public double PolylineTotal { get { return polylineTotal; } }
+        public bool PolylineMode { get { return isPolyline; } }
 
         public void UpdateDocument(bool force = false)
         {
@@ -313,117 +318,89 @@ void main()
 
         internal void ClearCache(bool GeomChanged)
         {
-            Cache = null;
             if (GeomChanged) VBOCacheDirty = true;
-        }
-
-        private void apictureBox1_Paint(object sender, PaintEventArgs e)
-        {
-            var G2 = e.Graphics;
-            Bounds Bounds = new Bounds();
-            foreach (var a in Document.Gerbers.OrderBy(x => x.sortindex))
-            {
-                Bounds.AddBox(a.File.BoundingBox);
-            }
-
-            if (Cache == null)
-            {
-                Cache = new Bitmap(Width, Height);
-                Graphics G = Graphics.FromImage(Cache);
-                GerberImageCreator.ApplyAASettings(G);
-
-                GraphicsGraphicsInterface GGI = new GraphicsGraphicsInterface(G);
-                GGI.Clear(Document.Colors.BackgroundColor);
-
-            //    DrawGerbersToGraphicsInterface(Bounds, GGI);
-            }
-            G2.DrawImage(Cache, 0, 0);
-
-            GerberImageCreator.ApplyAASettings(G2);
-
-            {
-                if (Document.CrossHairActive)
-                {
-                    if (Document.Gerbers.Count > 0)
-                    {
-                        float S = GetScaleAndBuildTransform(G2, Bounds);
-
-
-                        Color DimensionColor = Color.FromArgb(255, 255, 200);
-                        Pen P = new Pen(DimensionColor, 1.0f / S);
-
-                        P.DashPattern = new float[2] { 2, 2 };
-
-                        G2.DrawLine(P, (float)Bounds.TopLeft.X - 1000, Document.MouseY, (float)Bounds.BottomRight.X + 1000, Document.MouseY);
-                        G2.DrawLine(P, (float)Document.MouseX, (float)Bounds.TopLeft.Y - 1000, (float)Document.MouseX, (float)Bounds.BottomRight.Y + 1000);
-
-                        DrawLabel(G2, Bounds.ToString(), S, 12, Color.Beige, 0, 0, (float)Bounds.TopLeft.X,(float) Bounds.TopLeft.Y, false);
-                        DrawLabel(G2, String.Format("{0:N2}", Document.MouseX - Bounds.TopLeft.X), S, 12, DimensionColor, 5, 0, (float)Document.MouseX, (float)Bounds.TopLeft.Y, DisplaySide == BoardSide.Bottom);
-                        DrawLabel(G2, String.Format("{0:N2}", Document.MouseY - Bounds.TopLeft.Y), S, 12, DimensionColor, 0, -14, (float)Bounds.TopLeft.X, (float)Document.MouseY, DisplaySide == BoardSide.Bottom);
-                        //DrawUpsideDown(G2, String.Format("{0:N2}", Document.MouseX), S, 12, Color.Yellow, 5 / S + (float)Document.MouseX, (float)Bounds.TopLeft.Y);
-
-
-                    }
-                }
-            }
         }
 
         private void DrawGerbersToGraphicsInterface(Bounds Bounds, GerberVBO GGI)
         {
-            if (Document.Gerbers.Count > 0)
+            if (Document.Gerbers.Count == 0) return;
+
+            if (DispGerb == null)
             {
+                bool isBottomView = DisplaySide == BoardSide.Bottom;
+                var sideOrder = isBottomView
+                    ? Document.Gerbers.OrderByDescending(x => x.sortindex)
+                    : Document.Gerbers.OrderBy(x => x.sortindex);
 
-                float S = GetScaleAndBuildTransform(GGI, Bounds);
-                if (DispGerb == null)
+                foreach (var a in sideOrder)
                 {
-                    if (DisplaySide == BoardSide.Bottom)
-                    {
-                        foreach (var a in Document.Gerbers.OrderByDescending(x => x.sortindex))
-                        {
-                            if (a.File.Layer != BoardLayer.Drill)
-                            {
-                                var C =  Color.FromArgb(100, a.Color);
-                                
-                                if (a.File.Side == BoardSide.Top) C = MathHelpers.Interpolate(C, Document.Colors.BackgroundColor, 0.4f);
-                                DrawGerber(GGI, a.File, C);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        foreach (var a in Document.Gerbers.OrderBy(x => x.sortindex))
-                        {
-                            if (a.File.Layer != BoardLayer.Drill)
-                            {
-                                var C = a.Color;
-                                if (a.File.Side == BoardSide.Bottom) C = MathHelpers.Interpolate(C, Document.Colors.BackgroundColor, 0.4f);
+                    int idx = Document.Gerbers.IndexOf(a);
+                    if (!a.visible || HiddenLayerIndices.Contains(idx)) continue;
+                    if (a.File.Layer == BoardLayer.Drill) continue;
+                    if (a.File.Layer == BoardLayer.Outline || a.File.Layer == BoardLayer.Mill) continue;
 
-                                DrawGerber(GGI, a.File, C);
-                            }
-                        }
-                    }
+                    bool isPrimarySide = a.File.Side == DisplaySide
+                        || a.File.Side == BoardSide.Both
+                        || a.File.Side == BoardSide.Internal
+                        || a.File.Side == BoardSide.Unknown
+                        || a.File.Side == BoardSide.Either;
 
-                    foreach (var a in Document.Gerbers.OrderBy(x => x.sortindex))
+                    int alpha = (int)(255 * a.Alpha * (isPrimarySide ? 1.0f : 0.25f));
+                    alpha = Math.Max(20, Math.Min(255, alpha));
+                    var C = Color.FromArgb(alpha, a.Color);
+                    DrawGerber(GGI, a.File, C);
+                }
+
+                foreach (var a in Document.Gerbers.OrderBy(x => x.sortindex))
+                {
+                    int idx = Document.Gerbers.IndexOf(a);
+                    if (!a.visible || HiddenLayerIndices.Contains(idx)) continue;
+                    if (a.File.Layer == BoardLayer.Drill)
                     {
-                        if (a.File.Layer == BoardLayer.Drill)
-                        {
-                            DrawGerber(GGI, a.File, a.Color);
-                        }
+                        int alpha = (int)(255 * a.Alpha);
+                        DrawGerber(GGI, a.File, Color.FromArgb(alpha, a.Color));
                     }
                 }
-                else
+
+                foreach (var a in Document.Gerbers.OrderBy(x => x.sortindex))
                 {
-                    foreach (var a in Document.Gerbers.OrderBy(x => x.sortindex))
+                    int idx = Document.Gerbers.IndexOf(a);
+                    if (!a.visible || HiddenLayerIndices.Contains(idx)) continue;
+                    if (a.File.Layer == BoardLayer.Mill)
                     {
-                        if (a.File.Layer == BoardLayer.Outline || a.File.Layer == BoardLayer.Mill)
-                        {
-                            DrawGerber(GGI, a.File, Color.FromArgb(20, 255, 255, 255), true);
-                        }
+                        int alpha = (int)(255 * a.Alpha);
+                        DrawGerber(GGI, a.File, Color.FromArgb(alpha, a.Color));
                     }
-                    DrawGerber(GGI, DispGerb.File, Color.White);
+                }
+
+                foreach (var a in Document.Gerbers.OrderBy(x => x.sortindex))
+                {
+                    int idx = Document.Gerbers.IndexOf(a);
+                    if (!a.visible || HiddenLayerIndices.Contains(idx)) continue;
+                    if (a.File.Layer == BoardLayer.Outline)
+                    {
+                        int alpha = (int)(255 * a.Alpha);
+                        DrawGerber(GGI, a.File, Color.FromArgb(alpha, a.Color));
+                    }
                 }
             }
+            else
+            {
+                foreach (var a in Document.Gerbers.OrderBy(x => x.sortindex))
+                {
+                    int idx = Document.Gerbers.IndexOf(a);
+                    if (!a.visible || HiddenLayerIndices.Contains(idx)) continue;
+                    if (a.File.Layer == BoardLayer.Outline || a.File.Layer == BoardLayer.Mill)
+                    {
+                        int alpha = (int)(255 * 0.3f * a.Alpha);
+                        DrawGerber(GGI, a.File, Color.FromArgb(alpha, a.Color), true);
+                    }
+                }
+                int mainAlpha = (int)(255 * DispGerb.Alpha);
+                DrawGerber(GGI, DispGerb.File, Color.FromArgb(mainAlpha, DispGerb.Color));
+            }
         }
+
         private float GetScaleAndBuildTransform(GraphicsInterface G2, Bounds Bounds)
         {
             Bitmap B = new Bitmap(1, 1);
@@ -469,8 +446,6 @@ void main()
 
         private void pictureBox1_Resize(object sender, EventArgs e)
         {
-            Cache = null;
-            //pictureBox1.Invalidate();
             if (glcontrol1 != null) glcontrol1.Invalidate();
         }
 
@@ -480,47 +455,141 @@ void main()
             lastX = x;
             lastY = y;
             if (Document.Gerbers.Count == 0) return;
-           // if (Cache == null) return;
 
             Bounds Bounds = new Bounds();
-
-
             foreach (var a in Document.Gerbers.OrderBy(xx => xx.sortindex))
-            {
                 Bounds.AddBox(a.File.BoundingBox);
-            }
-            Graphics G = Graphics.FromImage(new Bitmap(1,1));
 
-            float S = GetScaleAndBuildTransform(G, Bounds);
-            var M = G.Transform.Clone();
-            M.Invert();
             PointF[] P = new PointF[1] { new PointF(x, y) };
-            M.TransformPoints(P);
-
+            using (Graphics G = Graphics.FromImage(new Bitmap(1, 1)))
+            {
+                float S = GetScaleAndBuildTransform(G, Bounds);
+                var M = G.Transform.Clone();
+                M.Invert();
+                M.TransformPoints(P);
+            }
             MainForm.SetMouseCoord(P[0].X, P[0].Y);
-
         }
 
         private void pictureBox1_MouseEnter(object sender, EventArgs e)
         {
-            MouseHovering = true;
             Document.CrossHairActive = true;
         }
 
         private void pictureBox1_MouseMove(object sender, MouseEventArgs e)
         {
+            if (isPanning)
+            {
+                float dx = (e.X - panStartMouse.X) / currentScale;
+                float dy = (e.Y - panStartMouse.Y) / currentScale;
+                Offset = new PointF(panStartOffset.X + dx, panStartOffset.Y - dy);
+                ClearCache(false);
+            }
+            else if (MeasureMode && measureActive)
+            {
+                SetXY(e.X, e.Y);
+                measureCurrent = new PointD(Document.MouseX, Document.MouseY);
+            }
+
             if (glcontrol1 != null) glcontrol1.Invalidate();
-            //pictureBox1.Invalidate();
-            SetXY(e.X, e.Y);
+
+            if (!(MeasureMode && measureActive))
+                SetXY(e.X, e.Y);
+
+            if (MeasureMode && measureActive)
+                MainForm.UpdateStatusBar(this);
+        }
+
+        private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left && MeasureMode)
+            {
+                if (!measureActive)
+                {
+                    SetXY(e.X, e.Y);
+                    measureActive = true;
+                    measureStart = new PointD(Document.MouseX, Document.MouseY);
+                    measureCurrent = measureStart;
+                    isPolyline = (ModifierKeys == Keys.Shift);
+                    if (isPolyline && polylinePoints.Count == 0)
+                    {
+                        polylinePoints.Add(measureStart);
+                        polylineTotal = 0;
+                    }
+                }
+                else
+                {
+                    SetXY(e.X, e.Y);
+                    var endPt = new PointD(Document.MouseX, Document.MouseY);
+                    var segDist = PointD.Distance(measureStart, endPt);
+                    LastDistance = segDist;
+                    if (isPolyline)
+                    {
+                        polylineTotal += segDist;
+                        polylinePoints.Add(endPt);
+                        measureStart = endPt;
+                        measureCurrent = endPt;
+                    }
+                    else
+                    {
+                        measurements.Add(Tuple.Create(measureStart, endPt));
+                        measureActive = false;
+                    }
+                }
+                ClearCache(false);
+                if (glcontrol1 != null) glcontrol1.Invalidate();
+                MainForm.UpdateStatusBar(this);
+                return;
+            }
+
+            if (e.Button == MouseButtons.Middle ||
+               ((ModifierKeys & Keys.Space) != 0 && e.Button == MouseButtons.Left && !MeasureMode))
+            {
+                if (Document.Gerbers.Count > 0)
+                {
+                    isPanning = true;
+                    panStartMouse = e.Location;
+                    panStartOffset = Offset;
+                }
+            }
+        }
+
+        private void pictureBox1_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Middle || e.Button == MouseButtons.Left)
+                isPanning = false;
+        }
+
+        private void LayerDisplay_MouseWheel(object sender, MouseEventArgs e)
+        {
+            bool ctrl = (ModifierKeys & Keys.Control) != 0;
+            float factor = e.Delta > 0 ? (ctrl ? 1.03f : 1.1f) : (ctrl ? 0.97f : 0.9f);
+            float newZoom = Zoomlevel * factor;
+            Offset = new PointF(
+                Offset.X - (float)((Document.MouseX * newZoom) - (Document.MouseX * Zoomlevel)),
+                Offset.Y - (float)((Document.MouseY * newZoom) - (Document.MouseY * Zoomlevel)));
+            Zoomlevel = newZoom;
+            ClearCache(false);
+            if (glcontrol1 != null) glcontrol1.Invalidate();
+            MainForm.UpdateStatusBar(this);
+        }
+
+        private void LayerDisplay_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+                PerformZoomToFit();
+            else if (e.Button == MouseButtons.Middle && MeasureMode && measureActive)
+            {
+                measureActive = false;
+                if (glcontrol1 != null) glcontrol1.Invalidate();
+                MainForm.UpdateStatusBar(this);
+            }
         }
 
         private void pictureBox1_MouseLeave(object sender, EventArgs e)
         {
-            MouseHovering = false;
             MainForm.MouseOut();
             if (glcontrol1 != null) glcontrol1.Invalidate();
-
-            //pictureBox1.Invalidate();
         }
 
         private void LayerDisplay_KeyDown(object sender, KeyEventArgs e)
@@ -586,6 +655,99 @@ void main()
         private void LayerDisplay_Resize(object sender, EventArgs e)
         {
             if (glcontrol1 != null) glcontrol1.Invalidate();
+        }
+
+        private void ShowLayerVisibilityForm()
+        {
+            var form = new LayerVisibilityForm(this, Document);
+            form.ShowDialog(this);
+            VBOCacheDirty = true;
+            if (glcontrol1 != null) glcontrol1.Invalidate();
+        }
+
+        public void PerformZoomToFit()
+        {
+            Zoomlevel = 1.0f;
+            Offset = new PointF(0, 0);
+            ClearCache(true);
+            if (glcontrol1 != null) glcontrol1.Invalidate();
+            MainForm.UpdateStatusBar(this);
+        }
+
+        public void ZoomIn()
+        {
+            float newZoom = Zoomlevel * 1.3f;
+            Offset = new PointF(
+                Offset.X - (float)((Document.MouseX * newZoom) - (Document.MouseX * Zoomlevel)),
+                Offset.Y - (float)((Document.MouseY * newZoom) - (Document.MouseY * Zoomlevel)));
+            Zoomlevel = newZoom;
+            ClearCache(false);
+            if (glcontrol1 != null) glcontrol1.Invalidate();
+            MainForm.UpdateStatusBar(this);
+        }
+
+        public void ZoomOut()
+        {
+            float newZoom = Zoomlevel * 0.7f;
+            Offset = new PointF(
+                Offset.X - (float)((Document.MouseX * newZoom) - (Document.MouseX * Zoomlevel)),
+                Offset.Y - (float)((Document.MouseY * newZoom) - (Document.MouseY * Zoomlevel)));
+            Zoomlevel = newZoom;
+            ClearCache(false);
+            if (glcontrol1 != null) glcontrol1.Invalidate();
+            MainForm.UpdateStatusBar(this);
+        }
+
+        public void ToggleMeasureMode()
+        {
+            MeasureMode = !MeasureMode;
+            if (!MeasureMode)
+            {
+                measureActive = false;
+                measurements.Clear();
+                polylinePoints.Clear();
+                polylineTotal = 0;
+                LastDistance = 0;
+            }
+            ClearCache(false);
+            if (glcontrol1 != null) glcontrol1.Invalidate();
+            MainForm.UpdateStatusBar(this);
+        }
+
+        public Bitmap CaptureViewport()
+        {
+            if (glcontrol1 == null || !glLoaded) return null;
+            glcontrol1.MakeCurrent();
+            Bitmap bmp = new Bitmap(glcontrol1.Width, glcontrol1.Height);
+            BitmapData data = bmp.LockBits(
+                new Rectangle(0, 0, glcontrol1.Width, glcontrol1.Height),
+                ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+            GL.ReadPixels(0, 0, glcontrol1.Width, glcontrol1.Height,
+                OpenTK.Graphics.OpenGL.PixelFormat.Bgr, PixelType.UnsignedByte, data.Scan0);
+            bmp.UnlockBits(data);
+            bmp.RotateFlip(RotateFlipType.RotateNoneFlipY);
+            return bmp;
+        }
+
+        private void DrawMeasurementOverlays(GLGraphicsInterface GI, Bounds Bounds)
+        {
+            if (!MeasureMode || Document.Gerbers.Count == 0) return;
+
+            Pen measurePen = new Pen(Color.FromArgb(255, 255, 100), 1.0f);
+            Pen pendingPen = new Pen(Color.FromArgb(200, 200, 255), 1.0f);
+            pendingPen.DashPattern = new float[] { 4, 4 };
+
+            foreach (var m in measurements)
+                GI.DrawLine(measurePen, (float)m.Item1.X, (float)m.Item1.Y, (float)m.Item2.X, (float)m.Item2.Y);
+
+            if (polylinePoints.Count > 1)
+                for (int i = 0; i < polylinePoints.Count - 1; i++)
+                    GI.DrawLine(measurePen, (float)polylinePoints[i].X, (float)polylinePoints[i].Y,
+                        (float)polylinePoints[i + 1].X, (float)polylinePoints[i + 1].Y);
+
+            if (measureActive)
+                GI.DrawLine(pendingPen, (float)measureStart.X, (float)measureStart.Y,
+                    (float)measureCurrent.X, (float)measureCurrent.Y);
         }
     }
 }
