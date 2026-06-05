@@ -6,7 +6,7 @@ namespace GerberCombinerBuilder
     static class Program
     {
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
             Application.ThreadException += (sender, e) =>
             {
@@ -22,9 +22,19 @@ namespace GerberCombinerBuilder
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             };
 
+            try
+            {
+                if (!FileAssociation.IsRegistered())
+                    FileAssociation.Register();
+            }
+            catch (Exception ex)
+            {
+                Logger.Log(ex, "File association registration");
+            }
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new GerberPanelizerParent());
+            Application.Run(new GerberPanelizerParent(args));
         }
     }
 }

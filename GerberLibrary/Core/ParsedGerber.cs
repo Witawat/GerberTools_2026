@@ -226,21 +226,6 @@ namespace GerberLibrary.Core
         public void FixPolygonWindings()
         {
             Polygons solution2 = new Polygons();
-            if (false)
-            {
-                for (int i = 0; i < DisplayShapes.Count; i++)
-                {
-                    Polygons clips = new Polygons();
-
-                    clips.Add(DisplayShapes[i].toPolygon());
-                    Clipper cp = new Clipper();
-                    cp.AddPolygons(solution2, PolyType.ptSubject);
-                    cp.AddPolygons(clips, PolyType.ptClip);
-
-                    cp.Execute(ClipType.ctXor, solution2, PolyFillType.pftEvenOdd, PolyFillType.pftEvenOdd);
-                }
-            }
-            else
             {
 
                 Polygons clips = new Polygons();
@@ -369,7 +354,7 @@ namespace GerberLibrary.Core
                         V.Add(new Vertex(a.Vertices[i].X, a.Vertices[i].Y));
                     }
 
-                    polygon.AddContour(V);
+                    polygon.Add(new Contour(V));
 
                     var options = new ConstraintOptions() { ConformingDelaunay = false};
                     var quality = new QualityOptions() { };

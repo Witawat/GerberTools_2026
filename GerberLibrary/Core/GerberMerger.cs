@@ -35,59 +35,6 @@ namespace GerberLibrary
                 Log.PopActivity(Check);
                 return;
             }
-
-
-            List<string> TempFiles = new List<string>();
-            if (true)
-            {
-
-                List<String> LeftOverFiles = new List<string>();
-                foreach (var a in Files)
-                {
-                    LeftOverFiles.Add(a);
-                }
-
-                while (LeftOverFiles.Count > 1)
-                {
-                    Log.AddString(String.Format("{0} files left in mergequeue", LeftOverFiles.Count));
-                    string File1 = LeftOverFiles[0];
-                    string File2 = LeftOverFiles[1];
-                    LeftOverFiles.Remove(File1);
-                    LeftOverFiles.Remove(File2);
-                    string NewFile = Path.GetTempFileName();
-
-                    Merge(File1, File2, NewFile, Log);
-                    TempFiles.Add(NewFile);
-                    LeftOverFiles.Add(NewFile);
-                }
-
-                if (File.Exists(output)) File.Delete(output);
-                File.Move(LeftOverFiles[0], output);
-            }
-            else
-            {
-
-                string LastFile = Files[0];
-                for (int i = 1; i < Files.Count - 1; i++)
-                {
-                    string NewFile = Path.GetTempFileName();
-                    TempFiles.Add(NewFile);
-                    Merge(LastFile, Files[i], NewFile, Log);
-                    LastFile = NewFile;
-                }
-                if (File.Exists(output)) File.Delete(output);
-                Merge(LastFile, Files.Last(), output, Log);
-            }
-            Log.AddString("Removing merge tempfiles");
-            foreach (string s in TempFiles)
-            {
-                try
-                {
-                    File.Delete(s);
-                }
-                catch (Exception) { }
-            }
-            Log.PopActivity(Check);
         }
 
         public static void MultiMerge(string file1, List<string> filestomergein, string output, ProgressLog Log)

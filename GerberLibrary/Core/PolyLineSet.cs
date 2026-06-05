@@ -531,8 +531,6 @@ namespace GerberLibrary
             GerberBlock PreviousBlock = null;
             List<String> lines = new List<string>();
             string currentline = "";
-            bool LastWasStar = false;
-
             CurrentBlock = new GerberBlock();
             CurrentBlock.Header = false;
             Blocks.Add(CurrentBlock);
@@ -629,7 +627,6 @@ namespace GerberLibrary
                             //  }
                             if (HeaderActive && c == '*')
                             {
-                                LastWasStar = true;
                                 CurrentBlock.Lines.Add(currentline);
                                 lines.Add(currentline);
                                 currentline = "";
@@ -638,7 +635,6 @@ namespace GerberLibrary
                             {
                                 if (c == '*')
                                 {
-                                    LastWasStar = true;
                                     CurrentBlock.Lines.Add(currentline);
                                     lines.Add(currentline);
                                     currentline = "";
@@ -646,7 +642,6 @@ namespace GerberLibrary
                                 }
                                 else
                                 {
-                                    LastWasStar = false;
 
                                 }
                             }
@@ -717,7 +712,6 @@ namespace GerberLibrary
         {
             List<GerberBlock> Blocks = new List<GerberBlock>();
             bool HeaderActive = false;
-            GerberBlock CurrentBlock = null;
 
             List<String> lines = new List<string>();
 
@@ -732,7 +726,6 @@ namespace GerberLibrary
                         if (HeaderActive)
                         {
                             HeaderActive = false;
-                            CurrentBlock = null;
                         }
                         else
                         {

@@ -101,11 +101,9 @@ namespace GerberLibrary
                 string FinalLine = lines[i].Replace("%", "").Replace("*", "").Trim();
 
                 bool DumpToOutput = false;
-                bool metaopen = false;
                 if (lines[i][0] == '%')
                 {
                     DumpToOutput = true;
-                    metaopen = true;
 
                 }
                 else

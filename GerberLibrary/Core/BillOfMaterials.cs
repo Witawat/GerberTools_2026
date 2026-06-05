@@ -624,12 +624,9 @@ namespace GerberLibrary.Core
 
                 //string Header = "Count,Name,Type,Package,Value,MfgPartNumber,RefDes";
 
-                int idxcount = 0;
                 int idxname = 1;
-                int idxtype = 2;
                 int idxpackage = 3;
                 int idxvalue = 4;
-                int idxmfg = 5;
                 int idxrefdes = 6;
                 var Hsplit = L[0].Split(',');
 
@@ -1739,7 +1736,6 @@ namespace GerberLibrary.Core
                         name = a.Children[0].Name;
                         id = a.Children[1].Name;
                         string descattrib = "";
-                        string sizeattrib = "";
                         string value = "";
                         var vV = a.Find("Value", false).FirstOrDefault();
                         var pP = a.Find("Pattern", false).FirstOrDefault();
@@ -1785,27 +1781,25 @@ namespace GerberLibrary.Core
                             y = float.Parse(V);
                         }
                         float angle = 0;
-                        float orientangle = 0;
                         int orientidx = 0;
                         var O = a.Find("Orientation", false).FirstOrDefault();
                         if (O != null && O.Children.Count > 0)
                         {
                             string V = O.Children[0].Name;
-                            if (V[0] == '0') { orientangle = 0; orientidx = 0; };
-                            if (V[0] == '1') { orientangle = 90; orientidx = 1; };
-                            if (V[0] == '2') { orientangle = 180; orientidx = 2; };
-                            if (V[0] == '3') { orientangle = 270; orientidx = 3; };
+                            if (V[0] == '0') { orientidx = 0; };
+                            if (V[0] == '1') { orientidx = 1; };
+                            if (V[0] == '2') { orientidx = 2; };
+                            if (V[0] == '3') { orientidx = 3; };
                         }
-                        float pangle = 0;
                         int partorientidx = 0;
                         var PO = a.Find("PatternOrientation", false).FirstOrDefault();
                         if (PO != null && PO.Children.Count > 0)
                         {
                             string V = PO.Children[0].Name;
-                            if (V[0] == '0') { pangle = 0; partorientidx = 0; }
-                            if (V[0] == '1') { pangle = 90; partorientidx = 1; }
-                            if (V[0] == '2') { pangle = 180; partorientidx = 2; }
-                            if (V[0] == '3') { pangle = 270; partorientidx = 3; }
+                            if (V[0] == '0') { partorientidx = 0; }
+                            if (V[0] == '1') { partorientidx = 1; }
+                            if (V[0] == '2') { partorientidx = 2; }
+                            if (V[0] == '3') { partorientidx = 3; }
 
                         }
 
@@ -3296,7 +3290,6 @@ namespace GerberLibrary.Core
                  var PCBRoot = new SNode();
                 PCBRoot.Load(S2);
 
-                float originx = 0, originy= 0, UnitMult = 1;
                 var pcb = PCBRoot.Find("kicad_pcb");
                 if (pcb == null || pcb.Count == 0)
                 {
@@ -3304,7 +3297,6 @@ namespace GerberLibrary.Core
                     Log.PopActivity();
                     return;
                 }
-                float AngleMult = 1.0f;
 
                 var C = pcb[0].Find("footprint");
 

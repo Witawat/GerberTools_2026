@@ -559,32 +559,6 @@ namespace GerberLibrary
 
             log.PopActivity();
 
-            //            PNL.SaveOutlineTo(OutputFolder, "mergedframeblended");
-            return;
-
-
-
-            var FrameFiles = Directory.GetFiles(FrameFolder);
-            var OutlineFiles = Directory.GetFiles(OutlineFolder);
-            List<String> AllFiles = new List<string>();
-            AllFiles.AddRange(FrameFiles);
-            foreach (var a in OutlineFiles)
-            {
-                BoardLayer layer;
-                BoardSide Side;
-
-                Gerber.DetermineBoardSideAndLayer(a, out Side, out layer);
-
-                if (layer != BoardLayer.Outline)
-                {
-                    AllFiles.Add(a);
-                }
-
-            }
-
-            //  AllFiles.AddRange(OutlineFiles);
-            GerberMerger.MergeAllByFileType(AllFiles, OutputFolder, "MergedFrame", log);
-
         }
 
 

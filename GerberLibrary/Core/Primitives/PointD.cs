@@ -129,6 +129,11 @@ namespace GerberLibrary.Core.Primitives
             return false;
         }
 
+        public override int GetHashCode()
+        {
+            return X.GetHashCode() ^ Y.GetHashCode();
+        }
+
         public static bool operator ==(PointD a, PointD b)
         {
             if (System.Object.ReferenceEquals(a, b))

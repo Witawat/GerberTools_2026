@@ -745,11 +745,24 @@ namespace GerberLibrary
                             DrawShape(G, P, Shape);
                         }
                     }
-                    var width = (int)(Math.Ceiling(a.TheGerber.BoundingBox.BottomRight.X - a.TheGerber.BoundingBox.TopLeft.X));
-                    var height = (int)(Math.Ceiling(a.TheGerber.BoundingBox.BottomRight.Y - a.TheGerber.BoundingBox.TopLeft.Y));
+                    double width = a.TheGerber.BoundingBox.BottomRight.X - a.TheGerber.BoundingBox.TopLeft.X;
+                    double height = a.TheGerber.BoundingBox.BottomRight.Y - a.TheGerber.BoundingBox.TopLeft.Y;
 
-                    double ox = width / 2.0;
-                    double oy = height / 2.0;
+                    double ox = (a.TheGerber.BoundingBox.TopLeft.X + a.TheGerber.BoundingBox.BottomRight.X) / 2.0;
+                    double oy = (a.TheGerber.BoundingBox.TopLeft.Y + a.TheGerber.BoundingBox.BottomRight.Y) / 2.0;
+
+                    var largestPoly = a.TheGerber.FindLargestPolygon();
+                    if (largestPoly != null && largestPoly.Item2 != null)
+                    {
+                        var ob = new Bounds();
+                        ob.FitPoint(largestPoly.Item2.Vertices);
+                        if (ob.Valid)
+                        {
+                            var mid = ob.Middle();
+                            ox = mid.X;
+                            oy = mid.Y;
+                        }
+                    }
 
                     PointD Ext = G.MeasureString(Path.GetFileName(GI.GerberPath));
                     double Z = 1;
@@ -758,7 +771,7 @@ namespace GerberLibrary
 
 
                     if (GI.GerberPath.Contains("???_negative") == false)
-                        G.DrawString(new PointD(ox, oy), Path.GetFileName(GI.GerberPath), 20.0/GlobalZoom, true, R, Gf, B, A);
+                        G.DrawString(new PointD(ox, oy), Path.GetFileName(GI.GerberPath), 20.0 / GlobalZoom, true, R, Gf, B, A);
 
 
                 }

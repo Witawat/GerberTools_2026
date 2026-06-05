@@ -317,7 +317,6 @@ namespace GerberLibrary.Core.Primitives
 
         public PointD GetCentroid()
         {
-            double accumulatedArea = 0.0;
             double centerX = 0.0;
             double centerY = 0.0;
 

@@ -199,12 +199,12 @@ namespace GerberCombinerBuilder
             Font.Options.Colour = new OpenTK.Graphics.Color4(r, g, b, a);
             if (center)
             {
-                Font.Print(text, QuickFont.QFontAlignment.Centre, new OpenTK.Vector2(0, -20));
+                Font.Print(text, QuickFont.QFontAlignment.Centre, new OpenTK.Vector2(0, 0));
 
             }
             else
             {
-                Font.Print(text, QuickFont.QFontAlignment.Left, new OpenTK.Vector2(0, -20));
+                Font.Print(text, QuickFont.QFontAlignment.Left, new OpenTK.Vector2(0, 0));
             }
             GL.Disable(EnableCap.Texture2D);
             GL.Disable(EnableCap.Blend);

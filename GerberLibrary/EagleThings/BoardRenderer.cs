@@ -273,37 +273,6 @@ namespace GerberLibrary
                 g.InterpolationMode = InterpolationMode.High;
 
 
-                if (false)
-                    foreach (var l in (from i in Layers orderby i.Value select i.Key))
-                    {
-                        var L = ShapeLists[l];
-
-                        foreach (var p in L)
-                        {
-                            foreach (var P in p)
-                            {
-                                if (P.Item1 != null && P.Item1.Name != null)
-                                {
-                                    var PS = PolyCenter(P.Item2);
-
-                                    GraphicsPath PATH = new GraphicsPath();
-                                    PATH.AddString(
-                                        P.Item1.Name,             // text to draw
-                                        FontFamily.GenericSansSerif,  // or any other font family
-                                        (int)FontStyle.Regular,      // font style (bold, italic, etc.)
-                                        72 * 10.0f / (72 * (float)scale),       // em size
-                                        new PointF(PS.X, (float)maxy - (PS.Y - (float)miny)),              // location where to draw text
-                                        SF);          // set options here (e.g. center alignment)
-                                    g.DrawPath(Color.Black, PATH, 2.0f / (float)scale);
-                                    g.FillPath(Color.White, PATH);
-
-                                    //g.DrawString(P.Item1.Name, new Font("Arial", 0.2f), Brushes.Black,, SF);
-
-
-                                }
-                            }
-                        }
-                    }
             }
 
             private PointF PolyCenter(List<PointF> points)

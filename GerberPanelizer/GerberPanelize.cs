@@ -418,6 +418,7 @@ namespace GerberCombinerBuilder
         private void GerberPanelize_Load(object sender, EventArgs e)
         {
             this.WindowState = FormWindowState.Maximized;
+            this.BeginInvoke(new Action(() => { ZoomToFit(); Redraw(false); }));
         }
 
         internal void AddInstance(string path, PointD coord)

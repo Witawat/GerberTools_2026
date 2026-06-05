@@ -55,7 +55,7 @@ namespace GerberCombinerBuilder
         }
         ControlWriter CW = new ControlWriter();
 
-        public GerberPanelizerParent()
+        public GerberPanelizerParent(string[] args = null)
         {
             InitializeComponent();
             try
@@ -240,6 +240,35 @@ namespace GerberCombinerBuilder
             menuStrip.Items.Insert(7, processMenu);
             menuStrip.Items.Insert(8, autoProcessMenu);
 
+            ToolStripMenuItem toolsMenu = new ToolStripMenuItem("&Tools");
+            ToolStripMenuItem registerAssocItem = new ToolStripMenuItem("Register .gerberset File Association", null, (s, e) =>
+            {
+                try
+                {
+                    FileAssociation.Register();
+                    MessageBox.Show("Registered .gerberset file association successfully.", "File Association", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Failed to register file association:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            });
+            ToolStripMenuItem unregisterAssocItem = new ToolStripMenuItem("Unregister .gerberset File Association", null, (s, e) =>
+            {
+                try
+                {
+                    FileAssociation.Unregister();
+                    MessageBox.Show("Unregistered .gerberset file association.", "File Association", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Failed to unregister file association:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            });
+            toolsMenu.DropDownItems.Add(registerAssocItem);
+            toolsMenu.DropDownItems.Add(unregisterAssocItem);
+            menuStrip.Items.Add(toolsMenu);
+
             BuildRecentFilesMenu();
             helpMenu.DropDownItems.Add(new ToolStripSeparator());
             helpMenu.DropDownItems.Add(new ToolStripMenuItem("View Error Log", null, (s, e) =>
@@ -249,6 +278,23 @@ namespace GerberCombinerBuilder
                 else
                     MessageBox.Show("No error log found.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }));
+
+            if (args != null && args.Length > 0)
+            {
+                var file = args[0];
+                this.Shown += (s, ev) =>
+                {
+                    if (File.Exists(file) && Path.GetExtension(file).ToLower() == ".gerberset")
+                    {
+                        GerberPanelize childForm = new GerberPanelize(this, TV, ID);
+                        childForm.MdiParent = this;
+                        childForm.Show();
+                        childForm.LoadFile(file);
+                        AddRecentFile(file);
+                        ActivePanelizeInstance = childForm;
+                    }
+                };
+            }
         }
         public static int timesrun = 0;
 
