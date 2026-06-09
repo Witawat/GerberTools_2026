@@ -312,7 +312,7 @@ namespace GerberViewer
             {
                 V.Add(new TriangleNet.Geometry.Vertex(path[j].X, path[j].Y));
             }
-            polygon.AddContour(V);
+            polygon.Add(new Contour(V));
 
             if (V.Count >= 3)
             {
@@ -374,7 +374,7 @@ namespace GerberViewer
                 {
                     V.Add(new TriangleNet.Geometry.Vertex(path.PathPoints[j].X, path.PathPoints[j].Y));
                 }
-                polygon.AddContour(V);
+                polygon.Add(new Contour(V));
 
             }
 
@@ -655,7 +655,7 @@ namespace GerberViewer
         {
             GL.LineWidth(P.Width);
             GL.Color4(P.Color.R, P.Color.G, P.Color.B, P.Color.A);
-            GL.Begin(BeginMode.LineStrip);
+            GL.Begin(PrimitiveType.LineStrip);
             for (int i = 0; i < Points.Count(); i++)
             {
                 GL.Vertex2(Points[i].X, Points[i].Y);
@@ -667,7 +667,7 @@ namespace GerberViewer
         {
             GL.LineWidth(P.Width);
             GL.Color4(P.Color.R, P.Color.G, P.Color.B, P.Color.A);
-            GL.Begin(BeginMode.Lines);
+            GL.Begin(PrimitiveType.Lines);
             GL.Vertex2(x1, y1);
             GL.Vertex2(x2, y2);
             GL.End();
@@ -771,7 +771,7 @@ namespace GerberViewer
             {
                 V.Add(new Vertex(Shape.Vertices[i].X, Shape.Vertices[i].Y));
             }
-            polygon.AddContour(V);
+            polygon.Add(new Contour(V));
 
 
             var options = new ConstraintOptions() { ConformingDelaunay = true };
@@ -780,7 +780,7 @@ namespace GerberViewer
             var mesh = polygon.Triangulate(options, quality);
 
 
-            GL.Begin(BeginMode.Triangles);
+            GL.Begin(PrimitiveType.Triangles);
             GL.Color4(P.Color.R, P.Color.G, P.Color.B, P.Color.A);
 
             foreach (var t in mesh.Triangles)
@@ -815,7 +815,7 @@ namespace GerberViewer
 
 
             GL.Color4(color);
-            GL.Begin(BeginMode.Quads);
+            GL.Begin(PrimitiveType.Quads);
             GL.Vertex2(x, y);
             GL.Vertex2(x + w, y);
             GL.Vertex2(x + w, y + h);

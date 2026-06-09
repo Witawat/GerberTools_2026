@@ -79,6 +79,7 @@ namespace GerberLibrary
         public double FlashScale = 1.0;
         public MirrorMode FlashMirror = MirrorMode.NoMirror;
         public List<PointD> ZerosizePoints = new List<PointD>();
+        public bool SkipThinShapeProcessing = false;
 
         public enum MirrorMode
         {
@@ -457,22 +458,25 @@ namespace GerberLibrary
                 }
             }
 
-            List<PathDefWithClosed> shapelist = new List<PathDefWithClosed>();
-            for (int i = 0; i < State.NewThinShapes.Count; i++)
+            if (State.SkipThinShapeProcessing == false)
             {
-                //DisplayShapes.Add(NewThinShapes[i]);
-                shapelist.Add(new PathDefWithClosed() { Vertices = State.NewThinShapes[i].Vertices, Width = State.NewThinShapes[i].Width });
-            }
+                List<PathDefWithClosed> shapelist = new List<PathDefWithClosed>();
+                for (int i = 0; i < State.NewThinShapes.Count; i++)
+                {
+                    //DisplayShapes.Add(NewThinShapes[i]);
+                    shapelist.Add(new PathDefWithClosed() { Vertices = State.NewThinShapes[i].Vertices, Width = State.NewThinShapes[i].Width });
+                }
 
-            var shapeslinked = Helpers.LineSegmentsToPolygons(log, shapelist);
+                var shapeslinked = Helpers.LineSegmentsToPolygons(log, shapelist);
 
-            foreach (var a in shapeslinked)
-            {
-                PolyLine PL = new PolyLine(State.LastShapeID++);
-                PL.Vertices = a.Vertices;
-                PL.Thin = true;
-                Gerb.DisplayShapes.Add(PL);
-                Gerb.Shapes.Add(PL);
+                foreach (var a in shapeslinked)
+                {
+                    PolyLine PL = new PolyLine(State.LastShapeID++);
+                    PL.Vertices = a.Vertices;
+                    PL.Thin = true;
+                    Gerb.DisplayShapes.Add(PL);
+                    Gerb.Shapes.Add(PL);
+                }
             }
 
             if (State.PreCombinePolygons)

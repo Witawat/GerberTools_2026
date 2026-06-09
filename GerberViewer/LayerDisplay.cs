@@ -176,6 +176,14 @@ void main()
 
             float S = GetScaleAndBuildTransform(GI, Bounds);
             currentScale = S;
+
+            if (ShowGrid)
+            {
+                GL.Enable(EnableCap.Blend);
+                GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+                DrawGrid(GI, S);
+            }
+
             MainShader.Bind();
             var M = GI.GetGlMatrix();
             GL.Uniform1(MainShader.Uniforms["linescale"].address, 1.0f/S);
@@ -223,6 +231,10 @@ void main()
         private Point panStartMouse;
         private PointF panStartOffset;
         private float currentScale = 1.0f;
+
+        public bool ShowGrid = true;
+        public float GridSpacing = 1.0f;
+        private Color GridColor = Color.FromArgb(70, 70, 75);
 
         public HashSet<int> HiddenLayerIndices = new HashSet<int>();
 
@@ -491,10 +503,14 @@ void main()
                 measureCurrent = new PointD(Document.MouseX, Document.MouseY);
             }
 
-            if (glcontrol1 != null) glcontrol1.Invalidate();
-
             if (!(MeasureMode && measureActive))
+            {
                 SetXY(e.X, e.Y);
+            }
+            else
+            {
+                if (glcontrol1 != null) glcontrol1.Invalidate();
+            }
 
             if (MeasureMode && measureActive)
                 MainForm.UpdateStatusBar(this);
@@ -714,6 +730,18 @@ void main()
             MainForm.UpdateStatusBar(this);
         }
 
+        public void ToggleGrid()
+        {
+            ShowGrid = !ShowGrid;
+            if (glcontrol1 != null) glcontrol1.Invalidate();
+        }
+
+        public void SetGridSpacing(float val)
+        {
+            GridSpacing = val;
+            if (glcontrol1 != null) glcontrol1.Invalidate();
+        }
+
         public Bitmap CaptureViewport()
         {
             if (glcontrol1 == null || !glLoaded) return null;
@@ -727,6 +755,82 @@ void main()
             bmp.UnlockBits(data);
             bmp.RotateFlip(RotateFlipType.RotateNoneFlipY);
             return bmp;
+        }
+
+        private void DrawGrid(GLGraphicsInterface GI, float scale)
+        {
+            if (Document.Gerbers.Count == 0) return;
+
+            float spacing = GridSpacing;
+            float dotWorld = 2.5f / Math.Abs(scale);
+
+            PointF[] corners = new PointF[4] {
+                new PointF(0, 0),
+                new PointF(glcontrol1.Width, 0),
+                new PointF(glcontrol1.Width, glcontrol1.Height),
+                new PointF(0, glcontrol1.Height)
+            };
+            var inv = GI.Transform.Clone();
+            try { inv.Invert(); }
+            catch { return; }
+            inv.TransformPoints(corners);
+
+            float left = corners[0].X, right = corners[0].X;
+            float top = corners[0].Y, bottom = corners[0].Y;
+            for (int i = 1; i < 4; i++)
+            {
+                left = Math.Min(left, corners[i].X);
+                right = Math.Max(right, corners[i].X);
+                top = Math.Min(top, corners[i].Y);
+                bottom = Math.Max(bottom, corners[i].Y);
+            }
+
+            float vw = Math.Abs(right - left);
+            float vh = Math.Abs(bottom - top);
+            if (vw < 0.001f || vh < 0.001f) return;
+
+            float estDots = (vw / spacing) * (vh / spacing);
+            if (estDots > 2500)
+            {
+                float factor = (float)Math.Sqrt(estDots / 2500.0);
+                spacing *= (float)Math.Ceiling(factor);
+            }
+
+            float startX = (float)(Math.Floor(left / spacing) * spacing);
+            float startY = (float)(Math.Floor(top / spacing) * spacing);
+            float endX = (float)(Math.Floor(right / spacing) * spacing);
+            float endY = (float)(Math.Floor(bottom / spacing) * spacing);
+
+            float hw = dotWorld * 0.5f;
+            GL.Color4(GridColor);
+            GL.Begin(PrimitiveType.Quads);
+            for (float x = startX; x <= endX + spacing; x += spacing)
+            {
+                for (float y = startY; y <= endY + spacing; y += spacing)
+                {
+                    GL.Vertex2(x - hw, y - hw);
+                    GL.Vertex2(x + hw, y - hw);
+                    GL.Vertex2(x + hw, y + hw);
+                    GL.Vertex2(x - hw, y + hw);
+                }
+            }
+            GL.End();
+
+            float originSize = 4.0f / Math.Abs(scale);
+            float ohw = originSize * 0.5f;
+            GL.Color4(Color.FromArgb(100, 180, 255));
+            GL.Begin(PrimitiveType.Lines);
+            GL.Vertex2(0, -ohw); GL.Vertex2(0, ohw);
+            GL.Vertex2(-ohw, 0); GL.Vertex2(ohw, 0);
+            GL.End();
+
+            GL.Color4(Color.FromArgb(100, 180, 255));
+            GL.Begin(PrimitiveType.Quads);
+            GL.Vertex2(-hw, -hw);
+            GL.Vertex2( hw, -hw);
+            GL.Vertex2( hw,  hw);
+            GL.Vertex2(-hw,  hw);
+            GL.End();
         }
 
         private void DrawMeasurementOverlays(GLGraphicsInterface GI, Bounds Bounds)

@@ -7,6 +7,7 @@ using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Drawing.Imaging;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -20,22 +21,32 @@ namespace GerberViewer
         private DockPanel dockPanel;
         LoadedStuff Document = new LoadedStuff();
         private ProgressLog _log;
+        private ToolStrip toolStrip;
+        private StatusStrip statusStrip;
+        private ToolStripStatusLabel modeLabel;
+        private ToolStripStatusLabel coordLabel;
+        private ToolStripStatusLabel zoomLabel;
+        private ToolStripStatusLabel measureLabel;
+        private ToolStripButton measureButton;
+        private ToolStripComboBox gridSpacingCombo;
+        private ToolStripButton gridToggleButton;
 
         public GerberViewerMainForm(string[] args)
         {
             Gerber.ArcQualityScaleFactor = 20;
 
-
             InitializeComponent();
 
             _log = new StandardConsoleLog();
-            this.dockPanel = new WeifenLuo.WinFormsUI.Docking.DockPanel();
 
+            this.dockPanel = new WeifenLuo.WinFormsUI.Docking.DockPanel();
             var theme = new VS2015BlueTheme();
             this.dockPanel.Theme = theme;
-
             this.dockPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.Controls.Add(this.dockPanel);
+
+            BuildToolStrip();
+            BuildStatusStrip();
 
             dockPanel.UpdateDockWindowZOrder(DockStyle.Left, true);
             ShowDockContent();
@@ -56,7 +67,16 @@ namespace GerberViewer
             {
                 LoadGerberFolder(files);
             }
+        }
 
+        private LayerDisplay ActiveLayerDisplay
+        {
+            get
+            {
+                var ad = dockPanel.ActiveDocument;
+                if (ad is LayerDisplay ld) return ld;
+                return TheTopDisplay;
+            }
         }
 
         LayerList TheList;
@@ -64,6 +84,163 @@ namespace GerberViewer
         LayerDisplay TheBottomDisplay;
 
         List<LayerDisplay> SingleLayers = new List<LayerDisplay>();
+
+        private void BuildToolStrip()
+        {
+            toolStrip = new ToolStrip();
+            toolStrip.Dock = DockStyle.Top;
+            toolStrip.GripStyle = ToolStripGripStyle.Hidden;
+
+            var btnZoomIn = new ToolStripButton("Zoom In", null, (s, e) => ActiveLayerDisplay?.ZoomIn());
+            var btnZoomOut = new ToolStripButton("Zoom Out", null, (s, e) => ActiveLayerDisplay?.ZoomOut());
+            var btnZoomFit = new ToolStripButton("Zoom Fit", null, (s, e) => ActiveLayerDisplay?.PerformZoomToFit());
+
+            measureButton = new ToolStripButton("Measure", null, (s, e) =>
+            {
+                var ld = ActiveLayerDisplay;
+                if (ld != null)
+                {
+                    ld.ToggleMeasureMode();
+                    measureButton.Checked = ld.MeasureMode;
+                    UpdateStatusBar(ld);
+                }
+            });
+            measureButton.CheckOnClick = true;
+
+            var btnExportPng = new ToolStripButton("Export PNG", null, (s, e) => ExportViewportToPng());
+            var btnClearAll = new ToolStripButton("Clear All", null, (s, e) => ClearAll());
+
+            toolStrip.Items.Add(btnZoomIn);
+            toolStrip.Items.Add(btnZoomOut);
+            toolStrip.Items.Add(btnZoomFit);
+            toolStrip.Items.Add(new ToolStripSeparator());
+
+            gridToggleButton = new ToolStripButton("Grid", null, (s, e) =>
+            {
+                var ld = ActiveLayerDisplay;
+                if (ld != null)
+                {
+                    ld.ToggleGrid();
+                    gridToggleButton.Checked = ld.ShowGrid;
+                    UpdateStatusBar(ld);
+                }
+            });
+            gridToggleButton.CheckOnClick = true;
+            gridToggleButton.Checked = true;
+
+            gridSpacingCombo = new ToolStripComboBox("gridSpacing");
+            gridSpacingCombo.DropDownStyle = ComboBoxStyle.DropDownList;
+            gridSpacingCombo.Items.AddRange(new object[] { "0.01", "0.1", "0.25", "0.5", "1.0", "2.5", "5.0", "10.0" });
+            gridSpacingCombo.SelectedItem = "1.0";
+            gridSpacingCombo.SelectedIndexChanged += (s, e) =>
+            {
+                var ld = ActiveLayerDisplay;
+                if (ld != null && gridSpacingCombo.SelectedItem != null)
+                {
+                    if (float.TryParse(gridSpacingCombo.SelectedItem.ToString(), out float val))
+                    {
+                        ld.SetGridSpacing(val);
+                    }
+                }
+            };
+
+            toolStrip.Items.Add(new ToolStripLabel(" Grid:"));
+            toolStrip.Items.Add(gridSpacingCombo);
+            toolStrip.Items.Add(gridToggleButton);
+            toolStrip.Items.Add(new ToolStripSeparator());
+
+            toolStrip.Items.Add(measureButton);
+            toolStrip.Items.Add(btnExportPng);
+            toolStrip.Items.Add(new ToolStripSeparator());
+            toolStrip.Items.Add(btnClearAll);
+
+            this.Controls.Add(toolStrip);
+        }
+
+        private void BuildStatusStrip()
+        {
+            statusStrip = new StatusStrip();
+            statusStrip.Dock = DockStyle.Bottom;
+
+            modeLabel = new ToolStripStatusLabel("Navigate");
+            modeLabel.BorderSides = ToolStripStatusLabelBorderSides.Right;
+            modeLabel.Width = 120;
+
+            coordLabel = new ToolStripStatusLabel("X: ---  Y: ---");
+            coordLabel.BorderSides = ToolStripStatusLabelBorderSides.Right;
+            coordLabel.Width = 260;
+
+            zoomLabel = new ToolStripStatusLabel("Zoom: 1.0x");
+            zoomLabel.BorderSides = ToolStripStatusLabelBorderSides.Right;
+            zoomLabel.Width = 120;
+
+            measureLabel = new ToolStripStatusLabel("");
+            measureLabel.Width = 400;
+
+            statusStrip.Items.Add(modeLabel);
+            statusStrip.Items.Add(coordLabel);
+            statusStrip.Items.Add(zoomLabel);
+            statusStrip.Items.Add(measureLabel);
+
+            this.Controls.Add(statusStrip);
+        }
+
+        internal void ExportViewportToPng()
+        {
+            var ld = ActiveLayerDisplay;
+            if (ld == null) return;
+            try
+            {
+                using (Bitmap bmp = ld.CaptureViewport())
+                {
+                    if (bmp == null) return;
+                    using (SaveFileDialog sfd = new SaveFileDialog())
+                    {
+                        sfd.Filter = "PNG Image|*.png";
+                        sfd.DefaultExt = "png";
+                        sfd.FileName = "gerber_view.png";
+                        if (sfd.ShowDialog() == DialogResult.OK)
+                        {
+                            bmp.Save(sfd.FileName, System.Drawing.Imaging.ImageFormat.Png);
+                            modeLabel.Text = "Exported: " + Path.GetFileName(sfd.FileName);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Export failed: " + ex.Message);
+            }
+        }
+
+        internal void UpdateStatusBar(LayerDisplay ld)
+        {
+            if (ld == null) return;
+            if (ld.MeasureMode)
+            {
+                modeLabel.Text = "Measure";
+                measureButton.Checked = true;
+            }
+            else
+            {
+                modeLabel.Text = "Navigate";
+                measureButton.Checked = false;
+            }
+            coordLabel.Text = string.Format("X: {0:F3}  Y: {1:F3}", Document.MouseX, Document.MouseY);
+            zoomLabel.Text = string.Format("Zoom: {0:F2}x", ld.Zoomlevel);
+
+            if (ld.MeasureMode && ld.LastDistance > 0)
+            {
+                if (ld.PolylineMode)
+                    measureLabel.Text = string.Format("Seg: {0:F2} mm | Total: {1:F2} mm", ld.LastDistance, ld.PolylineTotal);
+                else
+                    measureLabel.Text = string.Format("Dist: {0:F2} mm", ld.LastDistance);
+            }
+            else
+            {
+                measureLabel.Text = "";
+            }
+        }
 
         public void ShowDockContent()
         {
@@ -95,15 +272,20 @@ namespace GerberViewer
                 }
                 UpdateAll();
 
+                TheTopDisplay.PerformZoomToFit();
+                TheBottomDisplay.PerformZoomToFit();
+
             ClearDisplays();
 
                 foreach (var a in Document.Gerbers)
                 {
                     a.Panel = new LayerDisplay(Document, a, this);
                     a.Panel.Show(this.dockPanel, DockState.Document);
-                    a.Panel.Text = a.File.ToString();
+                    a.Panel.Text = Path.GetFileName(a.File.Name);
                     SingleLayers.Add(a.Panel);
                 }
+
+                TheTopDisplay.Activate();
             }
             catch (Exception ex)
             {
@@ -111,12 +293,29 @@ namespace GerberViewer
             }
         }
 
-        private void UpdateAll(bool reloadlist = true)
+        internal void RefreshDisplays()
         {
-            //Console.WriteLine("updating all");
+            if (TheTopDisplay == null) return;
+            TheTopDisplay.ClearCache(false);
+            TheBottomDisplay.ClearCache(false);
+            foreach (var a in SingleLayers) a.ClearCache(false);
+
+            TheTopDisplay.UpdateDocument(false);
+            TheBottomDisplay.UpdateDocument(false);
+            foreach (var a in SingleLayers) a.UpdateDocument(false);
+        }
+
+        internal void UpdateAll(bool reloadlist = true)
+        {
+            if (reloadlist) TheList?.UpdateLoadedStuff();
+
+            if (TheTopDisplay == null) return;
+            TheTopDisplay.ClearCache(true);
+            TheBottomDisplay.ClearCache(true);
+            foreach (var a in SingleLayers) a.ClearCache(true);
+
             TheTopDisplay.UpdateDocument(reloadlist);
             TheBottomDisplay.UpdateDocument(reloadlist);
-            if (reloadlist) TheList.UpdateLoadedStuff();
             foreach(var a in SingleLayers)
             {
                 a.UpdateDocument(reloadlist);
@@ -199,15 +398,15 @@ namespace GerberViewer
             Document.CrossHairActive = true;
             Document.MouseX = x;
             Document.MouseY = y;
-            UpdateAll(false);
-
+            RefreshDisplays();
+            UpdateStatusBar(ActiveLayerDisplay);
         }
 
         internal void MouseOut()
         {
             Document.CrossHairActive = false;
-            UpdateAll(false);
-            
+            RefreshDisplays();
+            UpdateStatusBar(ActiveLayerDisplay);
         }
 
         internal void ActivateTab(int rowIndex)

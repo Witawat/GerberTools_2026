@@ -30,7 +30,7 @@ namespace GerberViewer
             {
                 GL.BindTexture(TextureTarget.Texture2D, textureId);
 
-                GL.Begin(BeginMode.Quads);
+                GL.Begin(PrimitiveType.Quads);
                 //todo : might also flip the texture since fbo's have right handed coordinate systems
                 GL.TexCoord2(0.0, 0.0);
                 GL.Vertex3(xoffset, yoffset, 0.0);
