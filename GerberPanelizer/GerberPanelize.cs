@@ -335,17 +335,15 @@ namespace GerberCombinerBuilder
 
         public void exportAllGerbersToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            try
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.InitialDirectory = !string.IsNullOrEmpty(LoadedFile)
+                ? Path.GetDirectoryName(LoadedFile)
+                : ThePanel.TheSet.LastExportFolder;
+            saveFileDialog.Filter = "ZIP Files (*.zip)|*.zip|All Files (*.*)|*.*";
+            saveFileDialog.DefaultExt = "zip";
+            if (saveFileDialog.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
             {
-                folderBrowserDialog2.SelectedPath = ThePanel.TheSet.LastExportFolder;
-            }
-            catch (Exception ex)
-            {
-                Logger.Log(ex, "Set export folder");
-            }
-            if (folderBrowserDialog2.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                ExportFolder = folderBrowserDialog2.SelectedPath;
+                ExportFolder = Path.GetDirectoryName(saveFileDialog.FileName);
                 if (!Directory.Exists(ExportFolder))
                 {
                     try { Directory.CreateDirectory(ExportFolder); }
@@ -405,6 +403,11 @@ namespace GerberCombinerBuilder
             ProgressDialog.Close();
             ProgressDialog.Dispose();
             ProgressDialog = null;
+
+            if (!string.IsNullOrEmpty(ExportFolder) && Directory.Exists(ExportFolder))
+            {
+                System.Diagnostics.Process.Start("explorer.exe", ExportFolder);
+            }
         }
 
         private void GerberPanelize_Activated(object sender, EventArgs e)

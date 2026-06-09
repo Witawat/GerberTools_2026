@@ -55,7 +55,6 @@
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.folderBrowserDialog2 = new System.Windows.Forms.FolderBrowserDialog();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.addInstanceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addBreakTabToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -500,7 +499,6 @@
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
         private System.Windows.Forms.SaveFileDialog saveFileDialog1;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
-        private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog2;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem addInstanceToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem addBreakTabToolStripMenuItem;
