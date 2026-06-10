@@ -278,7 +278,7 @@ namespace GerberCombinerBuilder
 
         private void loadToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (openFileDialog1.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
+            if (openFileDialog1.ShowDialog(ParentFrame) == System.Windows.Forms.DialogResult.OK)
             {
                 string filename = openFileDialog1.FileName;
                 LoadFile(filename);
@@ -301,7 +301,7 @@ namespace GerberCombinerBuilder
 
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (saveFileDialog1.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
+            if (saveFileDialog1.ShowDialog(ParentFrame) == System.Windows.Forms.DialogResult.OK)
             {
                 string FileName = saveFileDialog1.FileName;
 
@@ -342,7 +342,7 @@ namespace GerberCombinerBuilder
             saveFileDialog.Filter = "ZIP Files (*.zip)|*.zip|All Files (*.*)|*.*";
             saveFileDialog.DefaultExt = "zip";
             saveFileDialog.FileName = BaseName + ".zip";
-            if (saveFileDialog.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
+            if (saveFileDialog.ShowDialog(ParentFrame) == System.Windows.Forms.DialogResult.OK)
             {
                 ExportFolder = Path.GetDirectoryName(saveFileDialog.FileName);
                 if (!Directory.Exists(ExportFolder))
@@ -1081,7 +1081,7 @@ namespace GerberCombinerBuilder
                 System.Windows.Forms.SaveFileDialog OFD = new System.Windows.Forms.SaveFileDialog();
                 OFD.Filter = "PNG Files (*.png)|*.png|JPEG Files (*.jpg)|*.jpg|All Files (*.*)|*.*";
                 OFD.DefaultExt = "png";
-                if (OFD.ShowDialog(this) != System.Windows.Forms.DialogResult.OK) return;
+                if (OFD.ShowDialog(ParentFrame) != System.Windows.Forms.DialogResult.OK) return;
 
                 GerberImageCreator GIC = new GerberImageCreator();
                 foreach (var a in Directory.GetFiles(sourceFolder))
@@ -1257,7 +1257,7 @@ namespace GerberCombinerBuilder
                 ofd.CheckFileExists = true;
                 ofd.Multiselect = true;
 
-                if (ofd.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
+                if (ofd.ShowDialog(ParentFrame) == System.Windows.Forms.DialogResult.OK)
                 {
                     try
                     {
@@ -1302,7 +1302,7 @@ namespace GerberCombinerBuilder
                         this.Cursor = Cursors.Default;
                     }
                 }
-                else if (folderBrowserDialog1.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
+                else if (folderBrowserDialog1.ShowDialog(ParentFrame) == System.Windows.Forms.DialogResult.OK)
                 {
                     try
                     {
