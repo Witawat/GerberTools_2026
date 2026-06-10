@@ -406,14 +406,12 @@ namespace GerberCombinerBuilder
 
             if (!string.IsNullOrEmpty(ExportFolder) && Directory.Exists(ExportFolder))
             {
+                System.Diagnostics.Process.Start("explorer.exe", ExportFolder);
+
                 string gerberViewerPath = Path.Combine(Application.StartupPath, "GerberViewer.exe");
                 if (File.Exists(gerberViewerPath))
                 {
-                    System.Diagnostics.Process.Start(gerberViewerPath, ExportFolder);
-                }
-                else
-                {
-                    System.Diagnostics.Process.Start("explorer.exe", ExportFolder);
+                    System.Diagnostics.Process.Start(gerberViewerPath, "\"" + ExportFolder + "\"");
                 }
             }
         }
