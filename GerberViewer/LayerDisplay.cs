@@ -255,7 +255,7 @@ void main()
         {
             bool DoInvalidate = force;
             // if (this.DockPanel.Visible) { DoInvalidate = true; Console.Write("dockpanel visible - "); }
-            if (this.DockPanel.ActiveDocument == this) { DoInvalidate = true; };// Console.Write("dockpane = this - "); }
+            if (this.DockPanel != null && this.DockPanel.ActiveDocument == this) { DoInvalidate = true; };// Console.Write("dockpane = this - "); }
             // if (this.Pane.IsActivated) { DoInvalidate = true; Console.Write("Activated - "); }
             //    if (this.Pane.IsActivePane) { DoInvalidate = true; Console.Write("ActivePane - "); }
             if (DispGerb == null) DoInvalidate = true;
@@ -283,49 +283,33 @@ void main()
 
         private void DrawGerber(GerberVBO G, ParsedGerber file, Color C, bool dotted = false)
         {
-
-            Pen P = new Pen(C, 1.0f );
+            Pen P = new Pen(C, 1.0f);
             if (dotted) P.DashPattern = new float[2] { 2, 2 };
             SolidBrush B = new SolidBrush(C);
-            //GraphicsPath GP = new GraphicsPath();
             var Out = file.IsOutline();
             G.Dotted = dotted;
             int Vbefore = G.VertexCount();
             foreach (var a in file.DisplayShapes)
             {
-
                 if (a.Vertices.Count > 1)
                 {
-
                     PointF[] Points = new PointF[a.Vertices.Count];
                     for (int i = 0; i < a.Vertices.Count; i++)
                     {
                         Points[i] = a.Vertices[i].ToF();
                     }
-                  //  GP.AddPolygon(Points);
                     if (Out == false)
                     {
                         G.FillPath(C, Points);
-                    //    GP = new GraphicsPath();
                     }
                     else
                     {
-                        G.DrawPath(C, Points,1.0f, true);
-                        //G.DrawPath(C, Points, 1.0f);
-                     //   GP = new GraphicsPath();
-
+                        G.DrawPath(C, Points, 1.0f, true);
                     }
                 }
             }
-            if (Out)
-            {
-               
-            }
-            int Vafter= G.VertexCount();
+            int Vafter = G.VertexCount();
             Console.WriteLine("Drawing file: {0} - {1} shapes, {2} vertices", file.Name, file.DisplayShapes.Count, Vafter - Vbefore);
-
-            
-
         }
 
         internal void ClearCache(bool GeomChanged)
@@ -494,7 +478,10 @@ void main()
             {
                 float dx = (e.X - panStartMouse.X) / currentScale;
                 float dy = (e.Y - panStartMouse.Y) / currentScale;
-                Offset = new PointF(panStartOffset.X + dx, panStartOffset.Y - dy);
+                if (DisplaySide == BoardSide.Bottom)
+                    Offset = new PointF(panStartOffset.X - dx, panStartOffset.Y - dy);
+                else
+                    Offset = new PointF(panStartOffset.X + dx, panStartOffset.Y - dy);
                 ClearCache(false);
             }
             else if (MeasureMode && measureActive)
@@ -581,9 +568,10 @@ void main()
             bool ctrl = (ModifierKeys & Keys.Control) != 0;
             float factor = e.Delta > 0 ? (ctrl ? 1.03f : 1.1f) : (ctrl ? 0.97f : 0.9f);
             float newZoom = Zoomlevel * factor;
+            float ratio = Zoomlevel / newZoom;
             Offset = new PointF(
-                Offset.X - (float)((Document.MouseX * newZoom) - (Document.MouseX * Zoomlevel)),
-                Offset.Y - (float)((Document.MouseY * newZoom) - (Document.MouseY * Zoomlevel)));
+                ratio * (Offset.X + Document.MouseX) - Document.MouseX,
+                ratio * (Offset.Y + Document.MouseY) - Document.MouseY);
             Zoomlevel = newZoom;
             ClearCache(false);
             if (glcontrol1 != null) glcontrol1.Invalidate();
@@ -816,20 +804,22 @@ void main()
             }
             GL.End();
 
-            float originSize = 4.0f / Math.Abs(scale);
+            float originSize = 8.0f / Math.Abs(scale);
             float ohw = originSize * 0.5f;
-            GL.Color4(Color.FromArgb(100, 180, 255));
+            float crossExt = originSize * 1.5f;
+            GL.Color4(Color.FromArgb(255, 200, 50));
             GL.Begin(PrimitiveType.Lines);
-            GL.Vertex2(0, -ohw); GL.Vertex2(0, ohw);
-            GL.Vertex2(-ohw, 0); GL.Vertex2(ohw, 0);
+            GL.Vertex2(0, -crossExt); GL.Vertex2(0, crossExt);
+            GL.Vertex2(-crossExt, 0); GL.Vertex2(crossExt, 0);
             GL.End();
 
-            GL.Color4(Color.FromArgb(100, 180, 255));
+            float dotHw = originSize * 0.3f;
+            GL.Color4(Color.FromArgb(255, 200, 50));
             GL.Begin(PrimitiveType.Quads);
-            GL.Vertex2(-hw, -hw);
-            GL.Vertex2( hw, -hw);
-            GL.Vertex2( hw,  hw);
-            GL.Vertex2(-hw,  hw);
+            GL.Vertex2(-dotHw, -dotHw);
+            GL.Vertex2( dotHw, -dotHw);
+            GL.Vertex2( dotHw,  dotHw);
+            GL.Vertex2(-dotHw,  dotHw);
             GL.End();
         }
 

@@ -297,11 +297,11 @@ namespace GerberViewer
         {
             if (TheTopDisplay == null) return;
             TheTopDisplay.ClearCache(false);
-            TheBottomDisplay.ClearCache(false);
+            if (TheBottomDisplay != null) TheBottomDisplay.ClearCache(false);
             foreach (var a in SingleLayers) a.ClearCache(false);
 
             TheTopDisplay.UpdateDocument(false);
-            TheBottomDisplay.UpdateDocument(false);
+            if (TheBottomDisplay != null) TheBottomDisplay.UpdateDocument(false);
             foreach (var a in SingleLayers) a.UpdateDocument(false);
         }
 

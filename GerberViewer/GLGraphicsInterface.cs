@@ -338,7 +338,6 @@ namespace GerberViewer
             }
         }
 
-
         public void DrawPath(Color c, PointF[] path, float v, bool bClosedCurve = true)
         {
             for (int j = 0; j < path.Length - 1; j++)
