@@ -364,8 +364,11 @@ namespace GerberViewer
                     SingleLayers.Add(a.Panel);
                 }
 
-                TheTopDisplay.Activate();
-                UpdateStatusBar(TheTopDisplay);
+                this.BeginInvoke((Action)(() =>
+                {
+                    TheTopDisplay.Activate();
+                    UpdateStatusBar(TheTopDisplay);
+                }));
             }
             catch (Exception ex)
             {
