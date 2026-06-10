@@ -249,6 +249,11 @@ if "%PROJTYPE%"=="GUI" (
     mkdir "!DSTDIR!" 2>nul
     xcopy "%ROOT%%PROJSRC%\bin\%CONFIG%\%PROJFW%\*" "!DSTDIR!" /Y /Q /E >nul 2>&1
     echo    -^> Build\Output\%PROJOUT%\
+    if not exist "%COMBINED%" mkdir "%COMBINED%" 2>nul
+    for %%a in (GerberViewer GerberPanelizer QuickGerberRender) do if /I "%PROJOUT%"=="%%a" (
+        echo    -^> Also copying to Combined folder...
+        xcopy "!DSTDIR!\*" "%COMBINED%\" /Y /Q /E >nul 2>&1
+    )
 ) else (
     xcopy "%ROOT%%PROJSRC%\bin\%CONFIG%\%PROJFW%\*" "%CLI_OUT%\" /Y /Q >nul 2>&1
     echo    -^> Build\Output\CommandLine\
