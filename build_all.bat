@@ -7,6 +7,7 @@ set ROOT=%~dp0
 set SLN=%ROOT%GerberTools.sln
 set OUT=%ROOT%Build\Output
 set CLI_OUT=%OUT%\CommandLine
+set COMBINED=%OUT%\..\Combined
 
 REM Check .NET SDK
 for /f "tokens=1" %%v in ('dotnet --version 2^>nul') do set SDKVER=%%v
@@ -118,6 +119,15 @@ call :copycli DirtyPCBs\Base64Extractor     net48
 call :copycli DirtyPCBs\DirtyLocaleTest     net48
 call :copycli GerberProjects\EagleLoadTest  net48
 call :copycli GerberProjects\FrameCreatorTest net48
+
+echo.
+echo  Copying main apps to Combined folder...
+if exist "%COMBINED%" rmdir /s /q "%COMBINED%"
+mkdir "%COMBINED%" 2>nul
+if exist "%OUT%\QuickGerberRender" xcopy "%OUT%\QuickGerberRender\*" "%COMBINED%\" /Y /Q >nul 2>&1
+if exist "%OUT%\GerberPanelizer"  xcopy "%OUT%\GerberPanelizer\*"  "%COMBINED%\" /Y /Q /E >nul 2>&1
+if exist "%OUT%\GerberViewer"     xcopy "%OUT%\GerberViewer\*"     "%COMBINED%\" /Y /Q >nul 2>&1
+echo    Combined -^> %COMBINED%
 
 echo.
 echo  ========================================
