@@ -226,7 +226,7 @@ namespace GerberCombinerBuilder
                     System.Windows.Forms.SaveFileDialog OFD = new System.Windows.Forms.SaveFileDialog();
 
                     OFD.DefaultExt = "";
-                    if (OFD.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+                    if (OFD.ShowDialog(this) != System.Windows.Forms.DialogResult.OK) return;
                     Console.WriteLine("path selected: {0}", path);
 
                     GerberImageCreator GIC = new GerberImageCreator();
@@ -241,7 +241,7 @@ namespace GerberCombinerBuilder
                 }
                 catch(Exception ex)
                 {
-                    MessageBox.Show("Error exporting board image:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, "Error exporting board image:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }

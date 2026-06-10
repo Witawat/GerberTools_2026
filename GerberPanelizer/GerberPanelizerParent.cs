@@ -250,11 +250,11 @@ namespace GerberCombinerBuilder
                 try
                 {
                     FileAssociation.Register();
-                    MessageBox.Show("Registered .gerberset file association successfully.", "File Association", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(this, "Registered .gerberset file association successfully.", "File Association", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Failed to register file association:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, "Failed to register file association:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             });
             ToolStripMenuItem unregisterAssocItem = new ToolStripMenuItem("Unregister .gerberset File Association", null, (s, e) =>
@@ -262,11 +262,11 @@ namespace GerberCombinerBuilder
                 try
                 {
                     FileAssociation.Unregister();
-                    MessageBox.Show("Unregistered .gerberset file association.", "File Association", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(this, "Unregistered .gerberset file association.", "File Association", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Failed to unregister file association:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, "Failed to unregister file association:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             });
             toolsMenu.DropDownItems.Add(registerAssocItem);
@@ -280,7 +280,7 @@ namespace GerberCombinerBuilder
                 if (File.Exists(Logger.LogPath))
                     Process.Start(Logger.LogPath);
                 else
-                    MessageBox.Show("No error log found.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(this, "No error log found.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }));
 
             if (args != null && args.Length > 0)

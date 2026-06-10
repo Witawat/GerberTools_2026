@@ -278,7 +278,7 @@ namespace GerberCombinerBuilder
 
         private void loadToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (openFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            if (openFileDialog1.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
             {
                 string filename = openFileDialog1.FileName;
                 LoadFile(filename);
@@ -301,7 +301,7 @@ namespace GerberCombinerBuilder
 
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (saveFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            if (saveFileDialog1.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
             {
                 string FileName = saveFileDialog1.FileName;
 
@@ -350,7 +350,7 @@ namespace GerberCombinerBuilder
                     catch (Exception ex)
                     {
                         Logger.Log(ex, "Create export folder");
-                        MessageBox.Show("Cannot create export folder:\n" + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show(this, "Cannot create export folder:\n" + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         return;
                     }
                 }
@@ -1047,8 +1047,8 @@ namespace GerberCombinerBuilder
        
         internal void exportBoardImageToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (SelectedInstance == null) { MessageBox.Show("Please select a Gerber instance first.", "Export Board Image", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
-            if (SelectedInstance.GetType() != typeof(GerberInstance)) { MessageBox.Show("Selected item is not a Gerber instance.", "Export Board Image", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
+            if (SelectedInstance == null) { MessageBox.Show(this, "Please select a Gerber instance first.", "Export Board Image", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
+            if (SelectedInstance.GetType() != typeof(GerberInstance)) { MessageBox.Show(this, "Selected item is not a Gerber instance.", "Export Board Image", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
 
             string path = (SelectedInstance as GerberInstance).GerberPath;
             string sourceFolder = path;
@@ -1065,13 +1065,13 @@ namespace GerberCombinerBuilder
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Cannot extract ZIP:\n" + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, "Cannot extract ZIP:\n" + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
             }
             else if (!Directory.Exists(path))
             {
-                MessageBox.Show("Gerber folder not found:\n" + path, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, "Gerber folder not found:\n" + path, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -1080,7 +1080,7 @@ namespace GerberCombinerBuilder
                 System.Windows.Forms.SaveFileDialog OFD = new System.Windows.Forms.SaveFileDialog();
                 OFD.Filter = "PNG Files (*.png)|*.png|JPEG Files (*.jpg)|*.jpg|All Files (*.*)|*.*";
                 OFD.DefaultExt = "png";
-                if (OFD.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+                if (OFD.ShowDialog(this) != System.Windows.Forms.DialogResult.OK) return;
 
                 GerberImageCreator GIC = new GerberImageCreator();
                 foreach (var a in Directory.GetFiles(sourceFolder))
@@ -1092,7 +1092,7 @@ namespace GerberCombinerBuilder
             catch (Exception ex)
             {
                 Logger.Log(ex, "Export Board Image");
-                MessageBox.Show("Error exporting board image:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, "Error exporting board image:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
@@ -1162,7 +1162,7 @@ namespace GerberCombinerBuilder
                         catch (Exception ex)
                         {
                             Console.WriteLine("Error loading {0}: {1}", S, ex.Message);
-                            MessageBox.Show("Error loading file:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            MessageBox.Show(this, "Error loading file:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
                         finally
                         {
@@ -1256,7 +1256,7 @@ namespace GerberCombinerBuilder
                 ofd.CheckFileExists = true;
                 ofd.Multiselect = true;
 
-                if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                if (ofd.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
                 {
                     try
                     {
@@ -1294,14 +1294,14 @@ namespace GerberCombinerBuilder
                     catch (Exception ex)
                     {
                         Console.WriteLine("Error loading: {0}", ex.Message);
-                        MessageBox.Show("Error loading file:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show(this, "Error loading file:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                     finally
                     {
                         this.Cursor = Cursors.Default;
                     }
                 }
-                else if (folderBrowserDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                else if (folderBrowserDialog1.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
                 {
                     try
                     {
@@ -1337,7 +1337,7 @@ namespace GerberCombinerBuilder
                     catch (Exception ex)
                     {
                         Console.WriteLine("Error loading folder: {0}", ex.Message);
-                        MessageBox.Show("Error loading folder:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show(this, "Error loading folder:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                     finally
                     {
