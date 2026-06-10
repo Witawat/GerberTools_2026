@@ -1,4 +1,5 @@
 ﻿using GerberLibrary;
+using GerberLibrary.Core;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -258,7 +259,7 @@ namespace GerberViewer
                     {
                         gerb.Color = cd.Color;
                         dataGridView1.InvalidateRow(e.RowIndex);
-                        ParentGerberViewerForm.RefreshDisplays();
+                        ParentGerberViewerForm.MarkFileDirtyAndRefresh(gerb.File);
                     }
                 }
                 return;
@@ -275,7 +276,7 @@ namespace GerberViewer
                 }
                 gerb.Alpha = alphas[(curIdx + 1) % alphas.Length];
                 dataGridView1[5, e.RowIndex].Value = string.Format("{0}%", (int)(gerb.Alpha * 100));
-                ParentGerberViewerForm.RefreshDisplays();
+                ParentGerberViewerForm.MarkFileDirtyAndRefresh(gerb.File);
                 return;
             }
 

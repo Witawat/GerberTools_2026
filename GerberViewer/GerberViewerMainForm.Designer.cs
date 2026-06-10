@@ -1,4 +1,6 @@
-﻿namespace GerberViewer
+﻿using System.Windows.Forms;
+
+namespace GerberViewer
 {
     partial class GerberViewerMainForm
     {
@@ -41,6 +43,7 @@
             this.IsMdiContainer = true;
             this.Name = "GerberViewerMainForm";
             this.Text = "TINRS Gerber Viewer";
+            this.StartPosition = FormStartPosition.CenterScreen;
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.GerberViewerMainForm_DragDrop);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.GerberViewerMainForm_DragEnter);
             this.ResumeLayout(false);

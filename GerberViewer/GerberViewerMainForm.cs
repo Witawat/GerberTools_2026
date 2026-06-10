@@ -2,6 +2,7 @@
 using GerberLibrary.Core;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
@@ -13,6 +14,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using WeifenLuo.WinFormsUI.Docking;
 using WeifenLuo.WinFormsUI.ThemeVS2015;
+using GerberViewer.Properties;
 
 namespace GerberViewer
 {
@@ -30,6 +32,8 @@ namespace GerberViewer
         private ToolStripButton measureButton;
         private ToolStripComboBox gridSpacingCombo;
         private ToolStripButton gridToggleButton;
+        private ToolStripButton snapToggleButton;
+        private ToolStripMenuItem recentFilesMenuItem;
 
         public GerberViewerMainForm(string[] args)
         {
@@ -91,6 +95,18 @@ namespace GerberViewer
             toolStrip.Dock = DockStyle.Top;
             toolStrip.GripStyle = ToolStripGripStyle.Hidden;
 
+            var fileBtn = new ToolStripDropDownButton("&File");
+            var openItem = new ToolStripMenuItem("&Open...", null, (s, e) => OpenFilesDialog());
+            openItem.ShortcutKeys = Keys.Control | Keys.O;
+            recentFilesMenuItem = new ToolStripMenuItem("Recent Files");
+            var exitItem = new ToolStripMenuItem("E&xit", null, (s, e) => Close());
+            fileBtn.DropDownItems.Add(openItem);
+            fileBtn.DropDownItems.Add(recentFilesMenuItem);
+            fileBtn.DropDownItems.Add(new ToolStripSeparator());
+            fileBtn.DropDownItems.Add(exitItem);
+            toolStrip.Items.Add(fileBtn);
+            BuildRecentFilesMenu();
+
             var btnZoomIn = new ToolStripButton("Zoom In", null, (s, e) => ActiveLayerDisplay?.ZoomIn());
             var btnZoomOut = new ToolStripButton("Zoom Out", null, (s, e) => ActiveLayerDisplay?.ZoomOut());
             var btnZoomFit = new ToolStripButton("Zoom Fit", null, (s, e) => ActiveLayerDisplay?.PerformZoomToFit());
@@ -144,9 +160,23 @@ namespace GerberViewer
                 }
             };
 
+            snapToggleButton = new ToolStripButton("Snap", null, (s, e) =>
+            {
+                var ld = ActiveLayerDisplay;
+                if (ld != null)
+                {
+                    ld.ToggleSnap();
+                    snapToggleButton.Checked = ld.SnapToGrid;
+                    UpdateStatusBar(ld);
+                }
+            });
+            snapToggleButton.CheckOnClick = true;
+            snapToggleButton.Checked = false;
+
             toolStrip.Items.Add(new ToolStripLabel(" Grid:"));
             toolStrip.Items.Add(gridSpacingCombo);
             toolStrip.Items.Add(gridToggleButton);
+            toolStrip.Items.Add(snapToggleButton);
             toolStrip.Items.Add(new ToolStripSeparator());
 
             toolStrip.Items.Add(measureButton);
@@ -155,6 +185,56 @@ namespace GerberViewer
             toolStrip.Items.Add(btnClearAll);
 
             this.Controls.Add(toolStrip);
+        }
+
+        internal void AddRecentFile(string path)
+        {
+            var recent = Settings.Default.RecentFiles;
+            if (recent == null) recent = new StringCollection();
+            recent.Remove(path);
+            while (recent.Count >= 10) recent.RemoveAt(recent.Count - 1);
+            recent.Insert(0, path);
+            Settings.Default.RecentFiles = recent;
+            try { Settings.Default.Save(); } catch { }
+            BuildRecentFilesMenu();
+        }
+
+        private void BuildRecentFilesMenu()
+        {
+            recentFilesMenuItem.DropDownItems.Clear();
+            var recent = Settings.Default.RecentFiles;
+            if (recent != null && recent.Count > 0)
+            {
+                foreach (string file in recent)
+                {
+                    if (!File.Exists(file)) continue;
+                    var item = new ToolStripMenuItem(file, null, (s, e) =>
+                    {
+                        LoadGerberFolder(new List<string> { file });
+                        AddRecentFile(file);
+                    });
+                    recentFilesMenuItem.DropDownItems.Add(item);
+                }
+            }
+            else
+            {
+                recentFilesMenuItem.DropDownItems.Add(new ToolStripMenuItem("(none)") { Enabled = false });
+            }
+        }
+
+        private void OpenFilesDialog()
+        {
+            using (OpenFileDialog ofd = new OpenFileDialog())
+            {
+                ofd.Multiselect = true;
+                ofd.Title = "Select Gerber files";
+                ofd.Filter = "All supported|*.gbr;*.gtl;*.gbl;*.gts;*.gbs;*.gto;*.gbo;*.gtp;*.gbp;*.gko;*.gm1;*.txt;*.drl|Gerber files (*.gbr)|*.gbr|All files (*.*)|*.*";
+                if (ofd.ShowDialog() == DialogResult.OK)
+                {
+                    LoadGerberFolder(ofd.FileNames.ToList());
+                    foreach (var f in ofd.FileNames) AddRecentFile(f);
+                }
+            }
         }
 
         private void BuildStatusStrip()
@@ -256,9 +336,7 @@ namespace GerberViewer
 
             TheList = new LayerList(this, Document, _log);
             TheList.Show(this.dockPanel, DockState.DockLeft);
-
-
-
+            TheList.Width = 480;
         }
 
         public void LoadGerberFolder(List<string> list)
@@ -268,7 +346,8 @@ namespace GerberViewer
             {
                 foreach (var a in list)
                 {
-                    Document.AddFile(_log,a);
+                    Document.AddFile(_log, a);
+                    AddRecentFile(a);
                 }
                 UpdateAll();
 
@@ -296,13 +375,18 @@ namespace GerberViewer
         internal void RefreshDisplays()
         {
             if (TheTopDisplay == null) return;
-            TheTopDisplay.ClearCache(false);
-            if (TheBottomDisplay != null) TheBottomDisplay.ClearCache(false);
-            foreach (var a in SingleLayers) a.ClearCache(false);
-
             TheTopDisplay.UpdateDocument(false);
             if (TheBottomDisplay != null) TheBottomDisplay.UpdateDocument(false);
             foreach (var a in SingleLayers) a.UpdateDocument(false);
+        }
+
+        internal void MarkFileDirtyAndRefresh(ParsedGerber file)
+        {
+            if (TheTopDisplay == null || file == null) return;
+            TheTopDisplay.MarkFileDirty(file);
+            if (TheBottomDisplay != null) TheBottomDisplay.MarkFileDirty(file);
+            foreach (var a in SingleLayers) a.MarkFileDirty(file);
+            RefreshDisplays();
         }
 
         internal void UpdateAll(bool reloadlist = true)
