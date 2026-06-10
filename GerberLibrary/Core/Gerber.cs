@@ -40,7 +40,7 @@ namespace GerberLibrary
                 case BoardLayer.Copper:      return ColorFromHSV(15, 0.8, 0.85);
                 case BoardLayer.SolderMask:  return ColorFromHSV(120, 0.7, 0.75);
                 case BoardLayer.Silk:        return ColorFromHSV(200, 0.5, 0.95);
-                case BoardLayer.Paste:       return ColorFromHSV(45, 0.8, 0.9);
+                case BoardLayer.Paste:       return ColorFromHSV(45, 0.7, 0.65);
                 case BoardLayer.Outline:     return ColorFromHSV(270, 0.6, 0.85);
                 case BoardLayer.Drill:       return ColorFromHSV(330, 0.8, 0.9);
                 case BoardLayer.Mill:        return ColorFromHSV(30, 0.85, 0.85);

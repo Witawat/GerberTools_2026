@@ -202,9 +202,12 @@ void main()
                         || a.File.Side == BoardSide.Unknown
                         || a.File.Side == BoardSide.Either;
 
-                    int alpha = (int)(255 * a.Alpha * (isPrimarySide ? 1.0f : 0.25f));
+                    var C = a.Color;
+                    if (!isPrimarySide)
+                        C = MathHelpers.Interpolate(C, Document.Colors.BackgroundColor, 0.4f);
+                    int alpha = (int)(255 * a.Alpha);
                     alpha = Math.Max(20, Math.Min(255, alpha));
-                    var C = Color.FromArgb(alpha, a.Color);
+                    C = Color.FromArgb(alpha, C);
                     RebuildAndRender(a.File, C);
                 }
 
