@@ -341,6 +341,7 @@ namespace GerberCombinerBuilder
                 : ThePanel.TheSet.LastExportFolder;
             saveFileDialog.Filter = "ZIP Files (*.zip)|*.zip|All Files (*.*)|*.*";
             saveFileDialog.DefaultExt = "zip";
+            saveFileDialog.FileName = BaseName + ".zip";
             if (saveFileDialog.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
             {
                 ExportFolder = Path.GetDirectoryName(saveFileDialog.FileName);
