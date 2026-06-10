@@ -356,7 +356,7 @@ namespace GerberCombinerBuilder
                     }
                 }
                 ProgressDialog = new Progress(this);
-                ProgressDialog.Show();
+                ProgressDialog.Show(ParentFrame);
                 Enabled = false;
                 ParentFrame.Enabled = false;
                 ExportThread = new Thread(new ThreadStart(ExportThreadFunc));
