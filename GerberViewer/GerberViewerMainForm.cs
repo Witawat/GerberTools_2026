@@ -166,12 +166,12 @@ namespace GerberViewer
                 if (ld != null)
                 {
                     ld.ToggleSnap();
-                    snapToggleButton.Checked = ld.SnapToGrid;
+                    snapToggleButton.Checked = LayerDisplay.SnapToGrid;
                     UpdateStatusBar(ld);
                 }
             });
             snapToggleButton.CheckOnClick = true;
-            snapToggleButton.Checked = false;
+            snapToggleButton.Checked = true;
 
             toolStrip.Items.Add(new ToolStripLabel(" Grid:"));
             toolStrip.Items.Add(gridSpacingCombo);
@@ -365,6 +365,7 @@ namespace GerberViewer
                 }
 
                 TheTopDisplay.Activate();
+                UpdateStatusBar(TheTopDisplay);
             }
             catch (Exception ex)
             {

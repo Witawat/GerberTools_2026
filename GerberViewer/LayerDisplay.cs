@@ -294,7 +294,7 @@ void main()
         private float currentScale = 1.0f;
 
         public bool ShowGrid = true;
-        public bool SnapToGrid = false;
+        public static bool SnapToGrid = true;
         public float GridSpacing = 1.0f;
         private Color GridColor = Color.FromArgb(70, 70, 75);
 
