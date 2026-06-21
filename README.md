@@ -129,6 +129,11 @@ A migration from legacy WinForms to modern Avalonia is in progress (tracked in `
 - [KNOWLEDGE_BASE.md](KNOWLEDGE_BASE.md) — Complete project reference (English)
 - [KNOWLEDGE_BASE_TH.md](KNOWLEDGE_BASE_TH.md) — Complete project reference (Thai)
 
+## Recent Fixes
+
+### 2026-06-21 — Drill (Excellon) BoundingBox fix
+`PolyLineSet.LoadExcellonDrillFile` ไม่เรียก `CalcPathBounds()` ทำให้ `BoundingBox` เป็น `(0,0)-(0,0)` เสมอ แก้ไขแล้วใน `PolyLineSet.cs:300,374` (ดูรายละเอียดใน `RELEASE.md`)
+
 ## License
 
 See the [LICENSE](LICENSE) file for details.

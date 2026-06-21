@@ -336,3 +336,25 @@
 | 47 | ReleaseBuilder | ReleaseBuilder | Exe | 4.8 | รวบรวม build output → ZIP |
 | 48 | MigrationTest | MigrationTest | Exe | 9.0 | ทดสอบการย้ายไลบรารี |
 | 49 | Tests | TestGenerator | Exe | 9.0 | สร้างไฟล์ Gerber ทดสอบสังเคราะห์ |
+
+---
+
+## บันทึกการแก้ไข (Changelog)
+
+### 2026-06-21 — แก้ไข BoundingBox ของไฟล์ Drill (Excellon) เป็น `(0,0)-(0,0)`
+
+**สาเหตุ:** `LoadExcellonDrillFileFromStream` และ `LoadExcellonDrillFile` ใน `PolyLineSet.cs` ไม่เรียก `CalcPathBounds()` หลังโหลดข้อมูล ทำให้ `BoundingBox.Valid` เป็น `false` และ `TopLeft`/`BottomRight` เป็น `(0,0)-(0,0)` เสมอ
+
+**การแก้ไข:** เพิ่ม `Gerb.CalcPathBounds();` ก่อน `return` ในทั้ง 2 เมธอด:
+- `LoadExcellonDrillFileFromStream` — `PolyLineSet.cs:300`
+- `LoadExcellonDrillFile` — `PolyLineSet.cs:374`
+
+**โปรแกรมที่ได้รับผลกระทบก่อนแก้ไข:**
+- `GerberViewer` — ซูม/จัด view ไม่ได้
+- `GerberToOutline` — `Width()`/`Height()` ได้ 0
+- `GerberAnalyse` — แสดงขนาด board เป็น 0
+- `FrontPanelBuilder` / `ImageToGerber` — ตำแหน่งกรอบ bounding box ผิด
+
+**ไม่มีผลกระทบกับ:**
+- `GerberPanelizer` — ใช้ `GerberInstance.BoundingBox` ที่คำนวณแยกต่างหากใน `RebuildTransformed`
+- ไฟล์ .drl/.xln ที่ส่งเข้าโรงงานโดยตรง — NC Drill format เก็บพิกัด absolute ไว้ในไฟล์อยู่แล้ว

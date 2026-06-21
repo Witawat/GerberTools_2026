@@ -297,6 +297,8 @@ namespace GerberLibrary
             Gerb.Layer = State.Layer;
             Gerb.State = State;
 
+            Gerb.CalcPathBounds();
+
             return Gerb;
 
         }
@@ -368,6 +370,8 @@ namespace GerberLibrary
             Gerb.Side = State.Side;
             Gerb.Layer = State.Layer;
             Gerb.State = State;
+
+            Gerb.CalcPathBounds();
 
             return Gerb;
 

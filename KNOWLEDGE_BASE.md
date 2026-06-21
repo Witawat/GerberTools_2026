@@ -344,3 +344,25 @@ All projects use SDK-style csproj format — buildable with `dotnet build <proje
 | 47 | ReleaseBuilder | ReleaseBuilder | Exe | 4.8 | Build output → ZIP packager |
 | 48 | MigrationTest | MigrationTest | Exe | 9.0 | Library migration smoke test |
 | 49 | Tests | TestGenerator | Exe | 9.0 | Synthetic Gerber test file generator |
+
+---
+
+## Changelog
+
+### 2026-06-21 — Fixed Drill (Excellon) BoundingBox returning `(0,0)-(0,0)`
+
+**Root Cause:** `LoadExcellonDrillFileFromStream` and `LoadExcellonDrillFile` in `PolyLineSet.cs` did not call `CalcPathBounds()` after loading, leaving `BoundingBox.Valid = false` and `TopLeft`/`BottomRight` at `(0,0)-(0,0)`.
+
+**Fix:** Added `Gerb.CalcPathBounds();` before `return` in both methods:
+- `LoadExcellonDrillFileFromStream` — `PolyLineSet.cs:300`
+- `LoadExcellonDrillFile` — `PolyLineSet.cs:374`
+
+**Affected tools before fix:**
+- `GerberViewer` — zoom/fit-to-view broken
+- `GerberToOutline` — `Width()`/`Height()` returns 0
+- `GerberAnalyse` — board dimensions shown as 0
+- `FrontPanelBuilder` / `ImageToGerber` — bounding box overlay positions wrong
+
+**No impact on:**
+- `GerberPanelizer` — uses `GerberInstance.BoundingBox` computed separately in `RebuildTransformed`
+- Raw .drl/.xln files sent to fab — NC Drill format stores absolute coordinates in-file, independent of BoundingBox
