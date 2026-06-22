@@ -1,0 +1,43 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GerberLibrary", "GerberLibrary\GerberLibrary.csproj", "{D2C8CC11-7FD4-445B-B3EF-13D158EE0044}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EagleLoaders", "EagleLoaders\EagleLoaders.csproj", "{5A990B56-56E3-4879-8DF0-26E3EA3BFE70}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickGerberRender", "QuickGerberRender\QuickGerberRender.csproj", "{11B108B6-07EF-462D-98A9-E5734F2EBA8B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GerberPanelizer", "GerberPanelizer\GerberPanelize.csproj", "{27D6E25B-D216-4CCA-B5FD-F9F8E044EBDD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GerberViewer", "GerberViewer\GerberViewer.csproj", "{BF7EAB0D-0EAF-437E-A284-13DDADE3EEF9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D2C8CC11-7FD4-445B-B3EF-13D158EE0044}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2C8CC11-7FD4-445B-B3EF-13D158EE0044}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2C8CC11-7FD4-445B-B3EF-13D158EE0044}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2C8CC11-7FD4-445B-B3EF-13D158EE0044}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5A990B56-56E3-4879-8DF0-26E3EA3BFE70}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A990B56-56E3-4879-8DF0-26E3EA3BFE70}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A990B56-56E3-4879-8DF0-26E3EA3BFE70}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A990B56-56E3-4879-8DF0-26E3EA3BFE70}.Release|Any CPU.Build.0 = Release|Any CPU
+		{11B108B6-07EF-462D-98A9-E5734F2EBA8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11B108B6-07EF-462D-98A9-E5734F2EBA8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11B108B6-07EF-462D-98A9-E5734F2EBA8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11B108B6-07EF-462D-98A9-E5734F2EBA8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{27D6E25B-D216-4CCA-B5FD-F9F8E044EBDD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{27D6E25B-D216-4CCA-B5FD-F9F8E044EBDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{27D6E25B-D216-4CCA-B5FD-F9F8E044EBDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{27D6E25B-D216-4CCA-B5FD-F9F8E044EBDD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BF7EAB0D-0EAF-437E-A284-13DDADE3EEF9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF7EAB0D-0EAF-437E-A284-13DDADE3EEF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF7EAB0D-0EAF-437E-A284-13DDADE3EEF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF7EAB0D-0EAF-437E-A284-13DDADE3EEF9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

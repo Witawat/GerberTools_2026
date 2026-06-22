@@ -256,6 +256,8 @@ Build/
 
 /scripts
 nuget.exe
+/LinuxPort/Output/
+/LinuxPort/Combined/
 /.gsd
 /TiNRS-Tiler.app
 /Tests/Ucamco_TestFiles
