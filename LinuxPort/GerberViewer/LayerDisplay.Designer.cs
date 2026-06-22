@@ -36,7 +36,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(600, 417);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            try { this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon"))); } catch { }
             this.Name = "LayerDisplay";
             this.Text = "LayerDisplay";
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.LayerDisplay_KeyDown);

@@ -257,7 +257,7 @@
             this.Controls.Add(this.splitter1);
             this.Controls.Add(this.tableLayoutPanel1);
             this.Controls.Add(this.pictureBox1);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            try { this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon"))); } catch { }
             this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.Name = "QuickGerberRender";
             this.Text = "TINRS - Quick Gerber Renderer";

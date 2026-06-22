@@ -450,7 +450,7 @@
             this.Controls.Add(this.MarginBox);
             this.Controls.Add(this.HeightBox);
             this.Controls.Add(this.WidthBox);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            try { this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon"))); } catch { }
             this.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.Name = "PanelProperties";
             this.Text = "Panel Properties";

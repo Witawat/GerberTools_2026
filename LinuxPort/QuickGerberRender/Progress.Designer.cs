@@ -71,7 +71,7 @@
             this.ClientSize = new System.Drawing.Size(510, 391);
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.progressBar1);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            try { this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon"))); } catch { }
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.Name = "Progress";
             this.Text = "Progress";

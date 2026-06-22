@@ -37,7 +37,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(454, 253);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            try { this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon"))); } catch { }
             this.Name = "LayerList";
             this.Text = "Layers";
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.LayerList_DragDrop);
